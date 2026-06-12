@@ -27,7 +27,16 @@ export default function GoogleLoginButton() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to synchronize secure session with server.');
+        let errorMsg = 'Failed to synchronize secure session with server.';
+        try {
+          const errData = await response.json();
+          if (errData.message) {
+            errorMsg = errData.message;
+          } else if (errData.error) {
+            errorMsg = errData.error;
+          }
+        } catch {}
+        throw new Error(errorMsg);
       }
 
       router.push('/dashboard');

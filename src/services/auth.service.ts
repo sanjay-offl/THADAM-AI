@@ -26,11 +26,12 @@ export async function handleGoogleLogin(idToken: string): Promise<AuthUser> {
   // 1. Verify the Firebase ID token
   const decodedToken = await verifyIdToken(idToken);
 
+  const email = decodedToken.email || `${decodedToken.uid}@thadam-temp.ai`;
   const userInfo: GoogleUserInfo = {
     uid: decodedToken.uid,
-    email: decodedToken.email!,
-    displayName: decodedToken.name || decodedToken.email?.split('@')[0],
-    photoURL: decodedToken.picture,
+    email: email,
+    displayName: decodedToken.name || email.split('@')[0],
+    photoURL: decodedToken.picture || undefined,
   };
 
   // 2. Upsert user in PostgreSQL

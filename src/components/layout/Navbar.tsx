@@ -22,11 +22,37 @@ export default function Navbar() {
 
   // Handle Auth State changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          // Verify if server session is also active
+          const sessionRes = await fetch('/api/auth/session');
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json();
+            if (!sessionData.authenticated) {
+              console.log('[Navbar] Server session out of sync. Synchronizing...');
+              const idToken = await currentUser.getIdToken();
+              const syncRes = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+              });
+              if (syncRes.ok) {
+                console.log('[Navbar] Session synchronized successfully.');
+                router.refresh();
+              } else {
+                console.error('[Navbar] Session synchronization failed.');
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[Navbar] Error checking/synchronizing session:', err);
+        }
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   // Handle Redirect Result after Google login fallback
   useEffect(() => {
@@ -42,8 +68,17 @@ export default function Navbar() {
             body: JSON.stringify({ idToken }),
           });
           if (!response.ok) {
-            console.error('Backend Auth Error after redirect');
-            alert('Authentication failed. Please verify your Google OAuth settings and Authorized Domains in Firebase.');
+            let errorMsg = 'Authentication failed. Please verify your Google OAuth settings and Authorized Domains in Firebase.';
+            try {
+              const errData = await response.json();
+              if (errData.message) {
+                errorMsg = errData.message;
+              } else if (errData.error) {
+                errorMsg = errData.error;
+              }
+            } catch {}
+            console.error('Backend Auth Error after redirect:', errorMsg);
+            alert(errorMsg);
           } else {
             router.push('/dashboard');
             router.refresh();
@@ -87,7 +122,16 @@ export default function Navbar() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to synchronize secure session with server.');
+        let errorMsg = 'Failed to synchronize secure session with server.';
+        try {
+          const errData = await response.json();
+          if (errData.message) {
+            errorMsg = errData.message;
+          } else if (errData.error) {
+            errorMsg = errData.error;
+          }
+        } catch {}
+        throw new Error(errorMsg);
       }
       
       setIsOpen(false);

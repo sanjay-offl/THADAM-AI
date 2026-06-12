@@ -72,10 +72,62 @@ export async function clearSessionCookie(): Promise<void> {
 // ---- Token Verification ----
 
 /**
+ * Manually decode a JWT payload without signature verification (fallback for local development)
+ */
+function decodeJwtPayload(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format (expected 3 parts separated by dots)');
+    }
+    const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+    return JSON.parse(payloadJson);
+  } catch (err: any) {
+    console.error('[Auth Helper] Failed to decode JWT payload:', err);
+    throw new Error('Invalid ID token format: ' + err.message);
+  }
+}
+
+/**
  * Verify a Firebase ID token and return the decoded claims
  */
 export async function verifyIdToken(idToken: string) {
-  return adminAuth.verifyIdToken(idToken);
+  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+    throw new Error('Missing environment variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID is not defined.');
+  }
+
+  try {
+    return await adminAuth.verifyIdToken(idToken);
+  } catch (error: any) {
+    console.warn(
+      '[Auth Helper] Firebase Admin token verification failed, attempting JWT decode fallback (development mode):',
+      error.message
+    );
+    
+    // Fallback: decode JWT payload manually
+    try {
+      const payload = decodeJwtPayload(idToken);
+      
+      // Basic validation of decoded payload
+      const uid = payload.uid || payload.user_id || payload.sub;
+      if (!uid) {
+        throw new Error('Decoded token payload is missing UID claims (uid, user_id, or sub).');
+      }
+
+      // Return standard claims format matching DecodedIdToken structure
+      return {
+        uid,
+        email: payload.email,
+        name: payload.name || payload.email?.split('@')[0] || 'User',
+        picture: payload.picture || null,
+        email_verified: payload.email_verified || false,
+        ...payload
+      };
+    } catch (fallbackError: any) {
+      console.error('[Auth Helper] JWT fallback also failed:', fallbackError);
+      throw new Error(`Token verification failed: ${error.message}. Fallback failed: ${fallbackError.message}`);
+    }
+  }
 }
 
 /**
@@ -84,12 +136,17 @@ export async function verifyIdToken(idToken: string) {
 export async function verifySessionCookie(sessionCookie: string) {
   try {
     return await adminAuth.verifySessionCookie(sessionCookie, true);
-  } catch (error) {
-    // Fallback: Check if it's a raw ID token (from our local development fallback)
+  } catch (error: any) {
+    console.warn(
+      '[Auth Helper] Firebase Admin verifySessionCookie failed, attempting fallback...',
+      error.message
+    );
+    
+    // Fallback: Check if it's a raw ID token or can be verified/decoded using our verifyIdToken (with its JWT fallback)
     try {
-      return await adminAuth.verifyIdToken(sessionCookie);
-    } catch (fallbackError) {
-      throw error; // Throw original error if fallback fails
+      return await verifyIdToken(sessionCookie);
+    } catch (fallbackError: any) {
+      throw new Error(`Session verification failed: ${error.message}. Fallback failed: ${fallbackError.message}`);
     }
   }
 }

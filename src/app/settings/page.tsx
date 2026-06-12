@@ -5,9 +5,14 @@ import GlassCard from '@/components/ui/GlassCard';
 import Button from '@/components/ui/Button';
 import { Camera, Save, Download, Trash2, Key, Bell, Shield, User, Monitor, Smartphone, Globe, Mail } from 'lucide-react';
 
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('account');
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
 
   // Settings State
@@ -35,7 +40,30 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    // Load settings from localStorage
+    // 1. Listen for auth state
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setAccount(prev => ({
+          ...prev,
+          name: currentUser.displayName || prev.name,
+          email: currentUser.email || prev.email,
+        }));
+        
+        // Use user's profile image if no local preview exists
+        const savedProfileImage = localStorage.getItem('thadam_profile_image');
+        if (savedProfileImage) {
+          setProfileImagePreview(savedProfileImage);
+        } else if (currentUser.photoURL) {
+          setProfileImagePreview(currentUser.photoURL);
+        }
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    // 2. Load settings from localStorage
     const savedAccount = localStorage.getItem('thadam_account_settings');
     if (savedAccount) setAccount(JSON.parse(savedAccount));
 
@@ -48,8 +76,7 @@ export default function SettingsPage() {
     const savedPrivacy = localStorage.getItem('thadam_privacy');
     if (savedPrivacy) setPrivacy(JSON.parse(savedPrivacy));
 
-    const savedProfileImage = localStorage.getItem('thadam_profile_image');
-    if (savedProfileImage) setProfileImagePreview(savedProfileImage);
+    return () => unsubscribe();
   }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,6 +126,28 @@ export default function SettingsPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (authLoading) {
+    return (
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div className="spinner" />
+        <style>{`
+          .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="container" style={{ padding: 'var(--space-2xl) 0', minHeight: '80vh' }}>
