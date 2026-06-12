@@ -5,7 +5,7 @@
   "description": "THADAM AI — Track Your Carbon. Transform Your Future.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
