@@ -12,50 +12,45 @@ import { auditEnvironment } from '@/lib/env-validator';
 import ConfigErrorPage from '@/components/errors/ConfigErrorPage';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://thadam-ai.vercel.app'),
-  title: {
-    template: '%s | THADAM AI',
-    default: 'THADAM AI',
-  },
-  description: 'Track, understand, and reduce your carbon footprint with AI-powered insights and sustainable actions.',
-  keywords: [
-    'Sustainability', 'Carbon Footprint', 'Climate Tech', 'AI', 'Environmental Impact',
-    'Carbon Tracking', 'Green Technology', 'Gemini AI', 'Waste Management', 'Recycling'
-  ],
-  authors: [{ name: 'THADAM AI' }],
+  metadataBase: new URL("https://thadam-ai.vercel.app"),
+
+  title: "THADAM AI",
+  description:
+    "Track, understand, and reduce your carbon footprint with AI-powered insights.",
+
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
+
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/icon.jpeg',
-    apple: '/apple-icon.jpeg',
+    icon: "/favicon-32x32.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
+
   openGraph: {
-    title: 'THADAM AI',
-    description: 'Track, understand, and reduce your carbon footprint with AI-powered insights and sustainable actions.',
-    url: 'https://thadam-ai.vercel.app',
-    siteName: 'THADAM AI',
+    title: "THADAM AI",
+    description:
+      "Track, understand, and reduce your carbon footprint with AI-powered insights.",
+    url: "https://thadam-ai.vercel.app",
+    siteName: "THADAM AI",
     images: [
       {
-        url: '/og-image.jpeg',
+        url: "https://thadam-ai.vercel.app/og-image.png",
         width: 1200,
         height: 630,
-        alt: 'THADAM AI - Carbon Footprint Tracker',
+        alt: "THADAM AI",
       },
     ],
-    locale: 'en_US',
-    type: 'website',
+    type: "website",
   },
+
   twitter: {
-    card: 'summary_large_image',
-    title: 'THADAM AI',
-    description: 'Track, understand, and reduce your carbon footprint with AI-powered insights and sustainable actions.',
-    images: ['/og-image.jpeg'],
-  },
-  robots: {
-    index: true,
-    follow: true,
+    card: "summary_large_image",
+    title: "THADAM AI",
+    description:
+      "Track, understand, and reduce your carbon footprint with AI-powered insights.",
+    images: ["https://thadam-ai.vercel.app/og-image.png"],
   },
 };
 
