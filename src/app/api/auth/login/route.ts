@@ -13,15 +13,19 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Verify required environment variables
     const missingEnv = [];
-    if (!process.env.DATABASE_URL) missingEnv.push('DATABASE_URL');
-    if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) missingEnv.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+    if (!process.env.DATABASE_URL) {
+      console.warn('[Auth Login] DATABASE_URL is missing in environment. Using fallback SQLite path.');
+    }
+    if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+      missingEnv.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+    }
     
     if (missingEnv.length > 0) {
-      console.error(`[Auth Login] Missing environment variables: ${missingEnv.join(', ')}`);
+      console.error(`[Auth Login] Missing critical environment variables: ${missingEnv.join(', ')}`);
       return NextResponse.json(
         { 
           error: 'Configuration Error', 
-          message: `The server is missing required configuration: ${missingEnv.join(', ')}. Please check your .env file.` 
+          message: `The server is missing required configuration: ${missingEnv.join(', ')}. Please verify server configuration settings.` 
         },
         { status: 500 }
       );

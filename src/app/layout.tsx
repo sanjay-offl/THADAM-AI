@@ -8,6 +8,8 @@ import '@/styles/globals.css';
 import '@/styles/glassmorphism.css';
 import '@/styles/animations.css';
 import '@/styles/components.css';
+import { auditEnvironment } from '@/lib/env-validator';
+import ConfigErrorPage from '@/components/errors/ConfigErrorPage';
 
 export const metadata: Metadata = {
   title: {
@@ -51,6 +53,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const envReport = auditEnvironment();
+
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
@@ -58,15 +62,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        <ThemeProvider>
-          <GradientMesh />
-          <FloatingLeaves />
-          <Navbar />
-          <main style={{ minHeight: '100vh', paddingTop: 'var(--navbar-height)' }}>
-            {children}
-          </main>
-          <Footer />
-        </ThemeProvider>
+        {!envReport.isValid ? (
+          <ConfigErrorPage report={envReport} />
+        ) : (
+          <ThemeProvider>
+            <GradientMesh />
+            <FloatingLeaves />
+            <Navbar />
+            <main style={{ minHeight: '100vh', paddingTop: 'var(--navbar-height)' }}>
+              {children}
+            </main>
+            <Footer />
+          </ThemeProvider>
+        )}
       </body>
     </html>
   );
