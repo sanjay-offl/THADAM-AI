@@ -17,15 +17,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion', 'recharts'],
   },
-  async redirects() {
-    return [
-      {
-        source: '/profile',
-        destination: '/dashboard/settings',
-        permanent: true,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
