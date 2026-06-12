@@ -1,87 +1,182 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
 import GlassCard from '@/components/ui/GlassCard';
 import Button from '@/components/ui/Button';
+import { storage, db, auth } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: 'Sanjay Kumar',
+    email: '',
+    phone: '',
+    location: 'Chennai, TN',
+    bio: 'Passionate about reducing carbon footprint.',
+    carbonGoals: 'Reduce daily commute emissions by 20%.',
+    photoURL: ''
+  });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setProfileData(prev => ({ ...prev, name: currentUser.displayName || 'Sanjay Kumar', email: currentUser.email || '', photoURL: currentUser.photoURL || '' }));
+        // Fetch from Firestore
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setProfileData(prev => ({ ...prev, ...docSnap.data() }));
+          }
+        } catch (e) {
+          console.error('Error fetching profile', e);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size exceeds 2MB maximum limit.');
+      return;
+    }
+
+    // Validate type
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Invalid file format. Only PNG, JPG, JPEG, and WEBP are allowed.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const storageRef = ref(storage, `profiles/${user.uid}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setProfileData(prev => ({ ...prev, photoURL: url }));
+      
+      // Save to firestore
+      await setDoc(doc(db, 'users', user.uid), { photoURL: url }, { merge: true });
+    } catch (err: any) {
+      alert('Failed to upload image: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await setDoc(doc(db, 'users', user.uid), profileData, { merge: true });
+      setIsEditing(false);
+    } catch (err: any) {
+      alert('Failed to save profile: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="container" style={{ padding: 'var(--space-2xl) 0' }}>
-      <div className="section-header">
-        <div className="section-tag">User Account</div>
-        <h1 className="section-title">Your Profile</h1>
+    <div className="container" style={{ padding: 'var(--space-xl) 0', minHeight: '80vh' }}>
+      <div className="section-header" style={{ marginBottom: 'var(--space-xl)' }}>
+        <h1 className="section-title">User Profile</h1>
+        <p style={{ color: 'var(--muted)' }}>View your public profile and overall sustainability rank.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--space-2xl)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
-          <GlassCard padding="var(--space-xl)" style={{ textAlign: 'center' }}>
-            <div style={{ width: 120, height: 120, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)', margin: '0 auto var(--space-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
-              👤
+      <GlassCard padding="var(--space-xl)" style={{ maxWidth: 800, margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-md)' }}>
+          
+          <div style={{ position: 'relative' }}>
+            <div 
+              style={{ width: 120, height: 120, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', color: '#fff', overflow: 'hidden', cursor: isEditing ? 'pointer' : 'default', border: '2px solid var(--primary)' }}
+              onClick={() => isEditing && fileInputRef.current?.click()}
+            >
+              {profileData.photoURL ? (
+                <img src={profileData.photoURL} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                profileData.name?.substring(0, 2).toUpperCase() || 'U'
+              )}
             </div>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-xs)' }}>Sanjay Kumar</h2>
-            <p style={{ color: 'var(--muted)', marginBottom: 'var(--space-md)' }}>demo@thadam.ai</p>
-            <div className="badge" style={{ marginBottom: 'var(--space-xl)' }}>🏆 Climate Champion</div>
-            <Button variant="secondary" style={{ width: '100%' }}>Edit Profile</Button>
-          </GlassCard>
+            {isEditing && (
+              <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: 6, fontSize: 12 }}>
+                📷
+              </div>
+            )}
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/png, image/jpeg, image/jpg, image/webp" style={{ display: 'none' }} />
+          </div>
 
-          <GlassCard padding="var(--space-xl)">
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>Carbon History</h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ color: 'var(--muted)' }}>Total Saved</span>
-              <span style={{ fontWeight: 600 }}>124 kg CO₂</span>
+          <h2 style={{ fontSize: 'var(--text-2xl)', margin: 0 }}>{profileData.name}</h2>
+          <span className="badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', padding: '4px 12px' }}>Earth Guardian</span>
+          
+          {/* Profile Form */}
+          <div style={{ width: '100%', marginTop: 'var(--space-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Full Name</label>
+                <input disabled={!isEditing} value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Email</label>
+                <input disabled={true} value={profileData.email} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)', opacity: 0.7 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Phone</label>
+                <input disabled={!isEditing} value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Location</label>
+                <input disabled={!isEditing} value={profileData.location} onChange={e => setProfileData({...profileData, location: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ color: 'var(--muted)' }}>Items Recycled</span>
-              <span style={{ fontWeight: 600 }}>89</span>
+
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Bio</label>
+              <textarea disabled={!isEditing} value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-sm) 0' }}>
-              <span style={{ color: 'var(--muted)' }}>Current Streak</span>
-              <span style={{ fontWeight: 600 }}>14 Days</span>
+
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Carbon Goals</label>
+              <textarea disabled={!isEditing} value={profileData.carbonGoals} onChange={e => setProfileData({...profileData, carbonGoals: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
             </div>
-          </GlassCard>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 'var(--space-md)' }}>
+              {isEditing ? (
+                <>
+                  <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
+                  <Button variant="primary" onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => setIsEditing(true)}>Edit Profile</Button>
+              )}
+            </div>
+          </div>
+          
+          <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-xl)' }}>
+            <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--primary)' }}>8,450</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Carbon Points</div>
+            </div>
+            <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--accent)' }}>142</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items Recycled</div>
+            </div>
+          </div>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
-          <GlassCard padding="var(--space-xl)">
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', marginBottom: 'var(--space-lg)' }}>Achievements</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 'var(--space-md)' }}>
-              <div style={{ textAlign: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: 32, marginBottom: 'var(--space-xs)' }}>📷</div>
-                <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>First Scan</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: 32, marginBottom: 'var(--space-xs)' }}>🔥</div>
-                <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>Week Warrior</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: 32, marginBottom: 'var(--space-xs)' }}>✂️</div>
-                <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>Carbon Cutter</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)', opacity: 0.3 }}>
-                <div style={{ fontSize: 32, marginBottom: 'var(--space-xs)' }}>🤖</div>
-                <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>Machine Master</div>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard padding="var(--space-xl)">
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', marginBottom: 'var(--space-lg)' }}>Reward History</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Recycled 5 Plastic Bottles</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>Today, 10:30 AM</div>
-                </div>
-                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>+50 Coins</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-md)', background: 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Redeemed Amazon Voucher</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>Yesterday, 2:15 PM</div>
-                </div>
-                <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-200 Coins</span>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

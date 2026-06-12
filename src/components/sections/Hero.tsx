@@ -221,8 +221,8 @@ export default function Hero() {
             <Link href="/carbon">
               <Button variant="primary" size="lg">Start Tracking</Button>
             </Link>
-            <Link href="/ai-coach">
-              <Button variant="secondary" size="lg">Talk to Gemini</Button>
+            <Link href="/chat">
+              <Button variant="secondary" size="lg">Chat with Gemini</Button>
             </Link>
           </div>
 

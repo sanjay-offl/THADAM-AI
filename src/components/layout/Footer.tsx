@@ -5,30 +5,24 @@ import Logo from '@/components/ui/Logo';
 
 const footerLinks = [
   {
-    title: 'Product',
-    links: [
-      { label: 'Carbon Tracker', href: '/carbon' },
-      { label: 'AI Scanner', href: '/scan' },
-      { label: 'Smart Machines', href: '/machines' },
-      { label: 'Rewards', href: '/rewards' },
-    ],
-  },
-  {
     title: 'Platform',
     links: [
-      { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Analytics', href: '/analytics' },
-      { label: 'Community', href: '/community' },
-      { label: 'Challenges', href: '/challenges' },
+      { label: 'About', href: '/about' },
+      { label: 'Contact', href: '/contact' },
     ],
   },
   {
-    title: 'Resources',
+    title: 'Legal',
     links: [
-      { label: 'Documentation', href: '#' },
-      { label: 'API Reference', href: '#' },
-      { label: 'Blog', href: '#' },
-      { label: 'Support', href: '#' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Support Center', href: '/support' },
+      { label: 'GitHub', href: 'https://github.com/THADAM-AI' },
     ],
   },
 ];

@@ -10,13 +10,20 @@ import '@/styles/animations.css';
 import '@/styles/components.css';
 
 export const metadata: Metadata = {
-  title: 'THADAM AI — Track Your Carbon. Transform Your Future.',
-  description: 'AI-powered sustainability intelligence platform. Track, understand, reduce, and improve your environmental impact with carbon analytics, smart recycling, and Gemini AI coaching.',
-  keywords: ['sustainability', 'carbon footprint', 'recycling', 'AI', 'environment', 'carbon tracking', 'green technology'],
+  title: {
+    template: '%s | THADAM AI',
+    default: 'THADAM AI | AI Powered Sustainability Platform',
+  },
+  description: 'Track, analyze, and reduce your carbon footprint using Gemini AI, smart recycling, sustainability analytics, and intelligent recommendations.',
+  keywords: [
+    'Carbon Footprint', 'Sustainability', 'Climate Tech', 'Waste Management', 
+    'Gemini AI', 'Recycling', 'Environmental Analytics', 'Smart Bins', 
+    'Green Technology', 'Carbon Tracking'
+  ],
   authors: [{ name: 'THADAM AI' }],
   openGraph: {
-    title: 'THADAM AI — Track Your Carbon. Transform Your Future.',
-    description: 'AI-powered sustainability intelligence platform.',
+    title: 'THADAM AI',
+    description: 'AI Powered Sustainability Platform',
     type: 'website',
     locale: 'en_US',
     siteName: 'THADAM AI',
@@ -30,6 +37,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A0A0A' },
+  ],
 };
 
 export default function RootLayout({

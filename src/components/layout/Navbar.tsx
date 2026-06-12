@@ -1,182 +1,517 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { NAV_ITEMS } from '@/constants';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import Logo from '@/components/ui/Logo';
-import Button from '@/components/ui/Button';
+import { Menu, X, LogOut, Settings, ChevronDown, UserIcon } from '@/components/ui/Icons';
+import Image from 'next/image';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!response.ok) console.error('Backend Auth Error');
+      setIsOpen(false);
+      router.push('/dashboard');
+      router.refresh();
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error?.code === 'auth/popup-blocked') {
+        alert('Login popup was blocked by your browser. Please allow popups for this site and try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+      router.refresh();
+      setIsDropdownOpen(false);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
-    <motion.nav
-      className="glass-nav"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 'var(--navbar-height)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 'var(--z-sticky)',
-        padding: '0 var(--space-lg)',
-      }}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-    >
-      <div style={{
-        width: '100%',
-        maxWidth: 'var(--container-wide)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        {/* Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-          <Logo />
-          <span style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 'var(--text-xl)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            lineHeight: 1,
-          }}>
-            <span className="text-gradient">THADAM</span>
-            <span style={{ color: 'var(--muted)', marginLeft: 4 }}>AI</span>
-          </span>
-        </Link>
+    <>
+      <nav className="thadam-navbar">
+        <div className="navbar-inner">
+          {/* Logo */}
+          <Link href="/" className="navbar-logo">
+            <Logo />
+            <span className="navbar-brand">
+              <span className="navbar-brand-primary">THADAM</span>
+              <span className="navbar-brand-ai">AI</span>
+            </span>
+          </Link>
 
-        {/* Desktop Nav */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-xs)',
-        }}
-          className="desktop-nav"
-        >
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                padding: 'var(--space-sm) var(--space-md)',
-                fontSize: 'var(--text-sm)',
-                color: 'var(--muted)',
-                borderRadius: 'var(--radius-sm)',
-                transition: 'all var(--transition-base)',
-                fontWeight: 500,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text)';
-                e.currentTarget.style.background = 'var(--card)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--muted)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Right Side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-          <ThemeToggle />
-          <div className="desktop-nav">
-            <Link href="/dashboard">
-              <Button variant="primary" size="sm">
-                Get Started
-              </Button>
-            </Link>
+          {/* Desktop Nav */}
+          <div className="navbar-links desktop-nav">
+            {!user ? (
+              <>
+                <Link href="/" className="navbar-link">Home</Link>
+                <Link href="/#about" className="navbar-link">About</Link>
+                <Link href="/#features" className="navbar-link">Features</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard" className="navbar-link">Dashboard</Link>
+                <Link href="/carbon" className="navbar-link">Carbon</Link>
+                <Link href="/scan" className="navbar-link">Scan</Link>
+                <Link href="/chat" className="navbar-link">Chat</Link>
+                <Link href="/rewards" className="navbar-link">Rewards</Link>
+                <Link href="/machines" className="navbar-link">Machines</Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="mobile-nav-toggle"
-            onClick={() => setIsOpen(!isOpen)}
-            style={{
-              display: 'none',
-              flexDirection: 'column',
-              gap: 5,
-              padding: 8,
-              background: 'none',
-              border: 'none',
-            }}
-            aria-label="Toggle navigation"
-          >
-            <motion.span
-              style={{ width: 24, height: 2, background: 'var(--text)', borderRadius: 2, display: 'block' }}
-              animate={isOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
-            />
-            <motion.span
-              style={{ width: 24, height: 2, background: 'var(--text)', borderRadius: 2, display: 'block' }}
-              animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
-            />
-            <motion.span
-              style={{ width: 24, height: 2, background: 'var(--text)', borderRadius: 2, display: 'block' }}
-              animate={isOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
-            />
-          </button>
-        </div>
-      </div>
+          {/* Right Side */}
+          <div className="navbar-actions">
+            <ThemeToggle />
 
-      {/* Mobile Menu */}
+            <div className="desktop-nav">
+              {user ? (
+                <div ref={dropdownRef} style={{ position: 'relative' }}>
+                  <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="navbar-user-btn">
+                    {user.photoURL ? (
+                      <Image src={user.photoURL} alt="Profile" width={32} height={32} style={{ borderRadius: '50%' }} />
+                    ) : (
+                      <div className="navbar-avatar">
+                        {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <span className="navbar-username">{user.displayName || 'User'}</span>
+                    <ChevronDown size={14} style={{ opacity: 0.5 }} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        className="navbar-dropdown"
+                      >
+                        <Link href="/profile" onClick={() => setIsDropdownOpen(false)} className="navbar-dropdown-item">
+                          <UserIcon size={16} /> My Account
+                        </Link>
+                        <Link href="/settings" onClick={() => setIsDropdownOpen(false)} className="navbar-dropdown-item">
+                          <Settings size={16} /> Settings
+                        </Link>
+                        <div className="navbar-dropdown-divider" />
+                        <button onClick={handleLogout} className="navbar-dropdown-item navbar-dropdown-danger">
+                          <LogOut size={16} /> Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <button onClick={handleGoogleLogin} disabled={isLoading} className="navbar-cta">
+                  {isLoading ? 'Connecting...' : 'Continue with Google'}
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button className="mobile-nav-toggle" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle navigation">
+              {isOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            className="glass-strong"
-            style={{
-              position: 'absolute',
-              top: 'var(--navbar-height)',
-              left: 'var(--space-md)',
-              right: 'var(--space-md)',
-              padding: 'var(--space-lg)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-sm)',
-            }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {NAV_ITEMS.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
-                style={{
-                  padding: 'var(--space-md)',
-                  fontSize: 'var(--text-base)',
-                  color: 'var(--text)',
-                  borderRadius: 'var(--radius-sm)',
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link href="/dashboard" onClick={() => setIsOpen(false)} style={{ marginTop: 'var(--space-sm)' }}>
-              <Button variant="primary" style={{ width: '100%' }}>
-                Get Started
-              </Button>
-            </Link>
-          </motion.div>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="mobile-overlay"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="mobile-drawer"
+            >
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+                <button onClick={() => setIsOpen(false)} className="mobile-close-btn"><X size={22} /></button>
+              </div>
+
+              {user && (
+                <div className="mobile-user-info">
+                  {user.photoURL ? (
+                    <Image src={user.photoURL} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+                  ) : (
+                    <div className="navbar-avatar" style={{ width: 44, height: 44, fontSize: 18 }}>
+                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{user.displayName || 'User'}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{user.email}</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mobile-nav-links">
+                {!user ? (
+                  <>
+                    <Link href="/" onClick={() => setIsOpen(false)} className="mobile-nav-link">Home</Link>
+                    <Link href="/#about" onClick={() => setIsOpen(false)} className="mobile-nav-link">About</Link>
+                    <Link href="/#features" onClick={() => setIsOpen(false)} className="mobile-nav-link">Features</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="mobile-nav-link">Dashboard</Link>
+                    <Link href="/carbon" onClick={() => setIsOpen(false)} className="mobile-nav-link">Carbon</Link>
+                    <Link href="/scan" onClick={() => setIsOpen(false)} className="mobile-nav-link">Scan</Link>
+                    <Link href="/chat" onClick={() => setIsOpen(false)} className="mobile-nav-link">Chat</Link>
+                    <Link href="/rewards" onClick={() => setIsOpen(false)} className="mobile-nav-link">Rewards</Link>
+                    <Link href="/machines" onClick={() => setIsOpen(false)} className="mobile-nav-link">Machines</Link>
+                  </>
+                )}
+              </div>
+
+              <div className="mobile-nav-footer">
+                {user ? (
+                  <>
+                    <Link href="/settings" onClick={() => setIsOpen(false)} className="mobile-nav-link">
+                      <Settings size={18} /> Settings
+                    </Link>
+                    <button onClick={handleLogout} className="mobile-nav-link" style={{ color: 'var(--danger)' }}>
+                      <LogOut size={18} /> Logout
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={handleGoogleLogin} disabled={isLoading} className="navbar-cta" style={{ width: '100%' }}>
+                    {isLoading ? 'Connecting...' : 'Continue with Google'}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
       <style>{`
+        /* ---- Navbar Core ---- */
+        .thadam-navbar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: var(--navbar-height);
+          z-index: 50;
+          background: var(--navbar-bg);
+          border-bottom: 1px solid var(--navbar-border);
+          transition: background 0.3s, border-color 0.3s;
+        }
+
+        .navbar-inner {
+          max-width: 1280px;
+          margin: 0 auto;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 24px;
+          gap: 16px;
+        }
+
+        /* Logo */
+        .navbar-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+        .navbar-brand {
+          font-family: var(--font-heading);
+          font-size: 18px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          line-height: 1;
+        }
+        .navbar-brand-primary {
+          color: var(--primary);
+        }
+        .navbar-brand-ai {
+          color: var(--muted);
+          margin-left: 3px;
+        }
+
+        /* Links */
+        .navbar-links {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .navbar-link {
+          padding: 8px 14px;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--navbar-text-muted);
+          border-radius: 8px;
+          transition: color 0.2s, background 0.2s;
+          text-decoration: none;
+          white-space: nowrap;
+        }
+        .navbar-link:hover {
+          color: var(--navbar-text);
+          background: var(--navbar-hover-bg);
+        }
+
+        /* Actions */
+        .navbar-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        /* User Button */
+        .navbar-user-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 12px 4px 4px;
+          border-radius: 9999px;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          cursor: pointer;
+          transition: all 0.2s;
+          color: var(--text);
+        }
+        .navbar-user-btn:hover {
+          border-color: var(--primary);
+          background: var(--navbar-hover-bg);
+        }
+        .navbar-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          font-weight: 700;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+        .navbar-username {
+          font-size: 13px;
+          font-weight: 500;
+          max-width: 100px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* CTA */
+        .navbar-cta {
+          background: var(--primary);
+          border: none;
+          padding: 8px 20px;
+          border-radius: 9999px;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .navbar-cta:hover {
+          background: #059669;
+          transform: translateY(-1px);
+        }
+        .navbar-cta:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* Dropdown */
+        .navbar-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: 200px;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 6px;
+          box-shadow: var(--shadow-lg);
+          z-index: 100;
+        }
+        .navbar-dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          color: var(--text);
+          text-decoration: none;
+          font-size: 14px;
+          transition: background 0.15s;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+          background: transparent;
+          border: none;
+        }
+        .navbar-dropdown-item:hover {
+          background: var(--navbar-hover-bg);
+        }
+        .navbar-dropdown-danger {
+          color: var(--danger);
+        }
+        .navbar-dropdown-danger:hover {
+          background: rgba(239, 68, 68, 0.08);
+        }
+        .navbar-dropdown-divider {
+          height: 1px;
+          background: var(--border);
+          margin: 4px 0;
+        }
+
+        /* Mobile Toggle */
+        .mobile-nav-toggle {
+          display: none;
+          background: transparent;
+          border: none;
+          color: var(--text);
+          cursor: pointer;
+          padding: 4px;
+        }
+
+        /* Mobile Overlay + Drawer */
+        .mobile-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 40;
+        }
+        .mobile-drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 280px;
+          max-width: 85vw;
+          background: var(--card);
+          border-left: 1px solid var(--border);
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          z-index: 50;
+          box-shadow: -8px 0 30px rgba(0,0,0,0.3);
+          overflow-y: auto;
+        }
+        .mobile-close-btn {
+          background: transparent;
+          border: none;
+          color: var(--text);
+          cursor: pointer;
+        }
+        .mobile-user-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid var(--border);
+        }
+        .mobile-nav-links {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex: 1;
+        }
+        .mobile-nav-link {
+          padding: 12px 14px;
+          font-size: 15px;
+          font-weight: 500;
+          color: var(--text);
+          border-radius: 8px;
+          text-decoration: none;
+          transition: background 0.15s;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: none;
+          background: transparent;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+        }
+        .mobile-nav-link:hover {
+          background: var(--navbar-hover-bg);
+        }
+        .mobile-nav-footer {
+          margin-top: auto;
+          padding-top: 20px;
+          border-top: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        /* ---- Responsive ---- */
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-nav-toggle { display: flex !important; }
+          .navbar-inner { padding: 0 16px; }
         }
       `}</style>
-    </motion.nav>
+    </>
   );
 }

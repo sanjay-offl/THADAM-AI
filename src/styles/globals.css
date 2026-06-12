@@ -9,39 +9,46 @@
    CSS Custom Properties — Theme System
    ============================================ */
 :root {
-  /* Dark Theme (Default) */
-  --background: #050505;
-  --surface: #0A0A0A;
-  --card: rgba(255, 255, 255, 0.08);
-  --card-hover: rgba(255, 255, 255, 0.12);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-hover: rgba(255, 255, 255, 0.2);
+  /* Dark Theme (Default) — Matte Black with Emerald Accents */
+  --background: #0A0A0A;
+  --surface: #111111;
+  --card: #171717;
+  --card-hover: #1E1E1E;
+  --border: #262626;
+  --border-hover: #3A3A3A;
 
-  --primary: #22C55E;
-  --primary-light: #4ADE80;
-  --primary-dark: #16A34A;
-  --primary-glow: rgba(34, 197, 94, 0.3);
-  --primary-subtle: rgba(34, 197, 94, 0.1);
+  --primary: #10B981;
+  --primary-light: #34D399;
+  --primary-dark: #065F46;
+  --primary-glow: rgba(16, 185, 129, 0.25);
+  --primary-subtle: rgba(16, 185, 129, 0.1);
 
-  --secondary: #4ADE80;
-  --accent: #38BDF8;
-  --accent-glow: rgba(56, 189, 248, 0.3);
+  --secondary: #34D399;
+  --accent: #10B981;
+  --accent-glow: rgba(16, 185, 129, 0.2);
 
-  --text: #F8FAFC;
-  --text-secondary: #CBD5E1;
-  --muted: #94A3B8;
-  --dim: #64748B;
+  --text: #FFFFFF;
+  --text-secondary: #D4D4D4;
+  --muted: #A3A3A3;
+  --dim: #525252;
 
   --danger: #EF4444;
   --warning: #F59E0B;
   --info: #3B82F6;
   --success: #22C55E;
 
+  /* Navbar */
+  --navbar-bg: #111111;
+  --navbar-text: #FFFFFF;
+  --navbar-text-muted: rgba(255, 255, 255, 0.6);
+  --navbar-border: #262626;
+  --navbar-hover-bg: rgba(255, 255, 255, 0.06);
+
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 40px var(--primary-glow);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 30px var(--primary-glow);
 
   /* Spacing */
   --space-xs: 4px;
@@ -56,15 +63,15 @@
 
   /* Radius */
   --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
   /* Typography */
-  --font-display: 'Caveat', cursive;
+  --font-display: 'Anton', sans-serif;
   --font-heading: 'Anton', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
   /* Font Sizes */
@@ -99,38 +106,45 @@
   /* Layout */
   --container-max: 1280px;
   --container-wide: 1440px;
-  --navbar-height: 72px;
+  --navbar-height: 64px;
   --sidebar-width: 280px;
 }
 
-/* ---- Light Theme ---- */
+/* ---- Light Theme — Clean, Apple/Linear inspired ---- */
 [data-theme='light'] {
-  --background: #FFFFFF;
-  --surface: #FAFAFA;
-  --card: rgba(255, 255, 255, 0.65);
-  --card-hover: rgba(255, 255, 255, 0.85);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.15);
+  --background: #F8FAF8;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #F3F4F6;
+  --border: #D1FAE5;
+  --border-hover: #A7F3D0;
 
-  --primary: #16A34A;
-  --primary-light: #22C55E;
-  --primary-dark: #15803D;
-  --primary-glow: rgba(22, 163, 74, 0.2);
-  --primary-subtle: rgba(22, 163, 74, 0.08);
+  --primary: #10B981;
+  --primary-light: #34D399;
+  --primary-dark: #065F46;
+  --primary-glow: rgba(16, 185, 129, 0.15);
+  --primary-subtle: rgba(16, 185, 129, 0.06);
 
-  --secondary: #22C55E;
-  --accent: #0EA5E9;
-  --accent-glow: rgba(14, 165, 233, 0.2);
+  --secondary: #059669;
+  --accent: #10B981;
+  --accent-glow: rgba(16, 185, 129, 0.12);
 
-  --text: #0F172A;
-  --text-secondary: #334155;
-  --muted: #64748B;
-  --dim: #94A3B8;
+  --text: #064E3B;
+  --text-secondary: #065F46;
+  --muted: #4B5563;
+  --dim: #9CA3AF;
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 40px var(--primary-glow);
+  /* Navbar */
+  --navbar-bg: #FFFFFF;
+  --navbar-text: #064E3B;
+  --navbar-text-muted: #4B5563;
+  --navbar-border: #E5E7EB;
+  --navbar-hover-bg: rgba(16, 185, 129, 0.06);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 30px var(--primary-glow);
 }
 
 /* ============================================
@@ -216,14 +230,14 @@ ul, ol {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-warm {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -270,16 +284,16 @@ ul, ol {
    Scrollbar
    ============================================ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--surface);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--dim);
   border-radius: var(--radius-full);
 }
 
@@ -304,16 +318,35 @@ ul, ol {
 }
 
 /* ============================================
-   Responsive
+   Responsive — Mobile First
    ============================================ */
+
+/* Tablet: 768px–1024px */
+@media (max-width: 1024px) {
+  :root {
+    --text-7xl: 3.5rem;
+    --text-8xl: 4.5rem;
+    --text-9xl: 5.5rem;
+    --space-5xl: 96px;
+    --space-4xl: 64px;
+  }
+
+  .grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+/* Mobile: < 768px */
 @media (max-width: 768px) {
   :root {
+    --text-5xl: 2rem;
+    --text-6xl: 2.5rem;
     --text-7xl: 3rem;
-    --text-8xl: 4rem;
-    --text-9xl: 5rem;
+    --text-8xl: 3.5rem;
+    --text-9xl: 4rem;
     --space-5xl: 64px;
     --space-4xl: 48px;
-    --navbar-height: 64px;
+    --navbar-height: 56px;
   }
 
   .container {
@@ -325,10 +358,13 @@ ul, ol {
   }
 }
 
+/* Small Mobile: < 480px */
 @media (max-width: 480px) {
   :root {
-    --text-7xl: 2.5rem;
-    --text-8xl: 3rem;
-    --text-9xl: 3.5rem;
+    --text-5xl: 1.75rem;
+    --text-6xl: 2rem;
+    --text-7xl: 2.25rem;
+    --text-8xl: 2.5rem;
+    --text-9xl: 3rem;
   }
 }

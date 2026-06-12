@@ -1,0 +1,100 @@
+// ============================================
+// THADAM AI — Prisma Schema
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---- User ----
+model User {
+  id          String   @id @default(cuid())
+  firebaseUid String   @unique @map("firebase_uid")
+  email       String   @unique
+  name        String?
+  avatar      String?
+  role        String   @default("user")
+  carbonScore Int      @default(0) @map("carbon_score")
+  rewardPoints Int     @default(0) @map("reward_points")
+  ecoRank     String   @default("Eco Beginner") @map("eco_rank")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  carbonAssessments   CarbonAssessment[]
+  rewards             Reward[]
+  machineTransactions MachineTransaction[]
+
+  @@map("users")
+}
+
+// ---- Carbon Assessment ----
+model CarbonAssessment {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  transportation Float
+  electricity    Float
+  food           Float
+  shopping       Float
+  waste          Float
+  totalCarbon    Float    @map("total_carbon")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("carbon_assessments")
+}
+
+// ---- Reward ----
+model Reward {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  points    Int
+  type      String
+  redeemed  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("rewards")
+}
+
+// ---- Machine ----
+model Machine {
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  latitude  Float
+  longitude Float
+  status    String   @default("online")
+  capacity  Float    @default(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  transactions MachineTransaction[]
+
+  @@map("machines")
+}
+
+// ---- Machine Transaction ----
+model MachineTransaction {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  machineId    String   @map("machine_id")
+  wasteType    String   @map("waste_type")
+  weight       Float
+  rewardPoints Int      @map("reward_points")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  machine Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([machineId])
+  @@map("machine_transactions")
+}

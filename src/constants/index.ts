@@ -13,25 +13,21 @@ export const ECO_RANKS: { rank: EcoRank; minScore: number; icon: string; color: 
 ];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Home', href: '/' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Carbon', href: '/carbon' },
   { label: 'Scan', href: '/scan' },
+  { label: 'Chat', href: '/chat' },
   { label: 'Rewards', href: '/rewards' },
   { label: 'Machines', href: '/machines' },
 ];
 
 export const DASHBOARD_NAV: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: '📊' },
-  { label: 'Carbon Tracker', href: '/carbon', icon: '🌍' },
-  { label: 'AI Scanner', href: '/scan', icon: '📷' },
+  { label: 'Carbon', href: '/carbon', icon: '🌍' },
+  { label: 'Scan', href: '/scan', icon: '📷' },
   { label: 'Rewards', href: '/rewards', icon: '🎁' },
-  { label: 'Challenges', href: '/challenges', icon: '🏆' },
-  { label: 'Analytics', href: '/analytics', icon: '📈' },
   { label: 'Machines', href: '/machines', icon: '🤖' },
-  { label: 'Community', href: '/community', icon: '👥' },
-  { label: 'Gemini Chat', href: '/ai-coach', icon: '✨' },
-  { label: 'Profile', href: '/profile', icon: '👤' },
+  { label: 'Settings', href: '/settings', icon: '⚙️' },
 ];
 
 export const ADMIN_NAV: NavItem[] = [

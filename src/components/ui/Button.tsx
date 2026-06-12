@@ -5,7 +5,7 @@ import type { ReactNode, ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'accent';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'accent' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
   icon?: ReactNode;
