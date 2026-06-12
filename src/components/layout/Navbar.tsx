@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { NAV_ITEMS } from '@/constants';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -20,12 +20,44 @@ export default function Navbar() {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Handle Auth State changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
+
+  // Handle Redirect Result after Google login fallback
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setIsLoading(true);
+          const idToken = await result.user.getIdToken();
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+          if (!response.ok) {
+            console.error('Backend Auth Error after redirect');
+            alert('Authentication failed. Please verify your Google OAuth settings and Authorized Domains in Firebase.');
+          } else {
+            router.push('/dashboard');
+            router.refresh();
+          }
+        }
+      } catch (error: any) {
+        console.error('Redirect auth error:', error);
+        alert(`Login error: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    handleRedirect();
+  }, [router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,26 +70,52 @@ export default function Navbar() {
   }, []);
 
   const handleGoogleLogin = async () => {
+    if (isLoading) return;
     try {
       setIsLoading(true);
       const provider = new GoogleAuthProvider();
+      // Configure provider to always prompt for account selection to avoid hanging sessions
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
-      if (!response.ok) console.error('Backend Auth Error');
+      
+      if (!response.ok) {
+        throw new Error('Failed to synchronize secure session with server.');
+      }
+      
       setIsOpen(false);
       router.push('/dashboard');
       router.refresh();
     } catch (error: any) {
-      console.error('Login error:', error);
-      if (error?.code === 'auth/popup-blocked') {
-        alert('Login popup was blocked by your browser. Please allow popups for this site and try again.');
+      console.error('Login error detail:', error);
+      
+      // Fallback to redirect if popup is blocked or environment doesn't support popups
+      if (
+        error?.code === 'auth/popup-blocked' ||
+        error?.code === 'auth/popup-closed-by-user' ||
+        error?.message?.includes('Cross-Origin')
+      ) {
+        console.log('Popup blocked or closed, falling back to redirect auth...');
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithRedirect(auth, provider);
+          return; // Wait for redirect
+        } catch (redirectError) {
+          console.error('Redirect fallback failed:', redirectError);
+        }
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        alert('Authentication failed: This domain is not authorized for Google Sign-In. Please add localhost (or your production domain) to the Authorized Domains list in your Firebase Console.');
+      } else {
+        alert(`Login failed: ${error.message || 'Please check your connection and configuration.'}`);
       }
-    } finally {
       setIsLoading(false);
     }
   };

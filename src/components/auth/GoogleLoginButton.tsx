@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { motion } from 'framer-motion';
 
@@ -11,38 +11,49 @@ export default function GoogleLoginButton() {
   const router = useRouter();
 
   const handleGoogleLogin = async () => {
+    if (isLoading) return;
     try {
       setIsLoading(true);
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       
-      // 1. Sign in with Firebase (opens Google popup)
       const result = await signInWithPopup(auth, provider);
-      
-      // 2. Get the Firebase ID token
       const idToken = await result.user.getIdToken();
 
-      // 3. Send token to our Next.js backend to create a secure session
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Backend Auth Error:', errorData);
-        throw new Error(errorData.message || 'Failed to create secure session');
+        throw new Error('Failed to synchronize secure session with server.');
       }
 
-      // 4. Redirect to dashboard
       router.push('/dashboard');
       router.refresh();
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please try again.');
-    } finally {
+    } catch (error: any) {
+      console.error('Login error detail:', error);
+      
+      if (
+        error?.code === 'auth/popup-blocked' ||
+        error?.code === 'auth/popup-closed-by-user' ||
+        error?.message?.includes('Cross-Origin')
+      ) {
+        console.log('Popup blocked or closed, falling back to redirect auth...');
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithRedirect(auth, provider);
+          return; // Wait for redirect
+        } catch (redirectError) {
+          console.error('Redirect fallback failed:', redirectError);
+        }
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        alert('Authentication failed: This domain is not authorized for Google Sign-In. Please add localhost (or your production domain) to the Authorized Domains list in your Firebase Console.');
+      } else {
+        alert(`Login failed: ${error.message || 'Please check your connection and configuration.'}`);
+      }
       setIsLoading(false);
     }
   };
