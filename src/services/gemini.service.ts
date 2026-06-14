@@ -70,12 +70,7 @@ export async function getCarbonTwinAnalysis(currentFootprint: number, categories
     const jsonStr = text.replace(/```json\n|\n```/g, '');
     return JSON.parse(jsonStr);
   } catch (e) {
-    return {
-      twinName: "Eco-Warrior",
-      twinFootprint: Math.max(0, currentFootprint - 50),
-      twinHabits: ["Uses reusable bags", "Composts food waste"],
-      actionableDifference: "Start composting today."
-    };
+    throw new Error('Failed to parse Gemini response for Carbon Twin');
   }
 }
 
@@ -106,15 +101,6 @@ export async function getRecommendations(carbonScore: number, ecoRank: string) {
     const jsonStr = text.replace(/```json\n|\n```/g, '');
     return JSON.parse(jsonStr);
   } catch (e) {
-    return {
-      recommendations: [
-        {
-          title: "Switch to LED",
-          description: "Replace your most used bulbs with LED to save energy.",
-          impact: "Medium",
-          category: "Energy"
-        }
-      ]
-    };
+    throw new Error('Failed to parse Gemini response for Recommendations');
   }
 }

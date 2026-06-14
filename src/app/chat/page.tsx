@@ -56,6 +56,54 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Load history from Firestore
+    const loadHistory = async () => {
+      try {
+        const { db, auth } = await import('@/lib/firebase');
+        const { collection, query, where, orderBy, getDocs, limit } = await import('firebase/firestore');
+        const { onAuthStateChanged } = await import('firebase/auth');
+
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            const q = query(
+              collection(db, 'ai_conversations'),
+              where('userId', '==', user.uid),
+              orderBy('timestamp', 'asc'),
+              limit(50)
+            );
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+              const loadedMessages: Message[] = [];
+              snapshot.forEach(doc => {
+                const data = doc.data();
+                loadedMessages.push({
+                  id: doc.id + '-prompt',
+                  role: 'user',
+                  content: data.prompt,
+                  timestamp: new Date(data.timestamp),
+                });
+                loadedMessages.push({
+                  id: doc.id + '-response',
+                  role: 'assistant',
+                  content: data.response,
+                  timestamp: new Date(data.timestamp),
+                });
+              });
+              setMessages(prev => {
+                const intro = prev[0];
+                return [intro, ...loadedMessages];
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load chat history:', err);
+      }
+    };
+    loadHistory();
+  }, []);
+
   const handleMapSearch = async (location: string) => {
     try {
       setDebugData(p => ({ ...p, status: 'Geocoding...' }));
@@ -102,46 +150,70 @@ export default function ChatPage() {
         .filter(m => m.id !== '0')
         .map(m => ({ role: m.role, content: m.content }));
 
+      const { auth } = await import('@/lib/firebase');
+      const userId = auth.currentUser?.uid || 'anonymous';
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
           history,
+          userId,
         }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to get response');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get response');
       }
 
-      let responseText = data.response;
+      if (!res.body) throw new Error('No response body');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
       
-      // Check for map intent
-      const mapMatch = responseText.match(/\[MAP_SEARCH:(.*?)\]/);
+      const aiMessageId = (Date.now() + 1).toString();
+      setMessages(prev => [...prev, {
+        id: aiMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      }]);
+      setIsLoading(false); // Stop typing indicator, start streaming
+
+      let done = false;
+      let fullResponseText = '';
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          fullResponseText += chunk;
+          setMessages(prev => 
+            prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + chunk } : m)
+          );
+        }
+      }
+
+      // Check for map intent after streaming completes
+      const mapMatch = fullResponseText.match(/\[MAP_SEARCH:(.*?)\]/);
       if (mapMatch) {
         const locationToSearch = mapMatch[1].trim();
-        responseText = responseText.replace(/\[MAP_SEARCH:.*?\]/g, '').trim();
+        setMessages(prev => 
+          prev.map(m => m.id === aiMessageId ? { ...m, content: m.content.replace(/\[MAP_SEARCH:.*?\]/g, '').trim() } : m)
+        );
         handleMapSearch(locationToSearch);
       }
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responseText,
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
       setDebugData(p => ({ ...p, status: 'Success', lastRequest: Date.now() - startTime }));
     } catch (err: any) {
       const actualError = err.message || 'Unknown network error';
       setError(actualError);
       setDebugData(p => ({ ...p, status: 'Error: ' + actualError, lastRequest: Date.now() - startTime }));
-    } finally {
       setIsLoading(false);
+    } finally {
       inputRef.current?.focus();
     }
   };

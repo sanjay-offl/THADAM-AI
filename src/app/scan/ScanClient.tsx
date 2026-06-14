@@ -72,20 +72,60 @@ export default function ScanClient() {
     }
   };
 
+  const compressImage = (dataUrl: string): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.src = dataUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > 1200) {
+          height = Math.round((height * 1200) / width);
+          width = 1200;
+        }
+        if (height > 1200) {
+          width = Math.round((width * 1200) / height);
+          height = 1200;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Compression failed'));
+        }, 'image/jpeg', 0.7);
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+    });
+  };
+
   const analyzeImage = async (dataUrl: string) => {
     setMode('analyzing');
     setErrorMsg('');
 
     try {
-      const mimeTypeMatch = dataUrl.match(/^data:(image\/\w+);base64,/);
-      const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/jpeg';
+      // 1. Compress Image
+      const blob = await compressImage(dataUrl);
 
+      // 2. Upload to Firebase Storage
+      const { storage } = await import('@/lib/firebase');
+      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+      
+      const storageRef = ref(storage, `scans/scan_${Date.now()}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      // 3. Send URL to API
       const response = await fetch('/api/scan/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: dataUrl,
-          mimeType: mimeType,
+          imageUrl: downloadUrl,
         }),
       });
 
@@ -105,7 +145,7 @@ export default function ScanClient() {
       });
       setMode('result');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to analyze image');
+      setErrorMsg(err.message || 'Failed to analyze image. Please try again.');
       setMode('error');
     }
   };

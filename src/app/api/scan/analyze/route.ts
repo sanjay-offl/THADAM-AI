@@ -8,23 +8,31 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { image, mimeType = 'image/jpeg' } = body;
+    const { image, imageUrl, mimeType = 'image/jpeg' } = body;
 
-    if (!image) {
-      return NextResponse.json({ error: 'Image data is required' }, { status: 400 });
+    let base64Data = '';
+    let finalMimeType = mimeType;
+
+    if (imageUrl) {
+      // Download from Firebase Storage
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) throw new Error('Failed to download image from storage');
+      const arrayBuffer = await imgRes.arrayBuffer();
+      base64Data = Buffer.from(arrayBuffer).toString('base64');
+      finalMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+    } else if (image) {
+      if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+        return NextResponse.json({ error: 'Invalid file format. Only JPG, PNG, and WEBP are supported.' }, { status: 400 });
+      }
+      base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    } else {
+      return NextResponse.json({ error: 'Image data or URL is required' }, { status: 400 });
     }
-
-    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-      return NextResponse.json({ error: 'Invalid file format. Only JPG, PNG, and WEBP are supported.' }, { status: 400 });
-    }
-
-    // Strip data URL prefix if present
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
     // Validate size roughly (base64 string length * 0.75 is approx byte size)
     const approximateSize = base64Data.length * 0.75;
     if (approximateSize > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File size exceeds 4MB limit.' }, { status: 400 });
+      return NextResponse.json({ error: 'File size exceeds 4MB limit. Please upload a smaller image.' }, { status: 413 });
     }
 
     const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
@@ -57,7 +65,7 @@ Respond ONLY with a valid JSON object. Do not include markdown blocks like \`\`\
           { text: prompt },
           {
             inlineData: {
-              mimeType,
+              mimeType: finalMimeType,
               data: base64Data,
             },
           },
@@ -88,14 +96,20 @@ Respond ONLY with a valid JSON object. Do not include markdown blocks like \`\`\
       timestamp: new Date().toISOString()
     }));
 
-    // Fallback response - never show 403, 500, Stack trace, or Consumer suspended to users.
+    let friendlyError = 'Gemini temporarily unavailable. Please try again.';
+    if (errorMessage.includes('413') || errorMessage.includes('Payload Too Large')) {
+      friendlyError = 'Image exceeds allowed size. Please upload an image smaller than 1 MB.';
+    }
+
+    // Return actual error message as requested in Task 8
     return NextResponse.json({ 
+      error: friendlyError,
       wasteType: 'Unknown',
       recyclable: false,
       carbonImpact: 'Unknown',
       confidence: 0,
       disposalMethod: 'Landfill',
-      analysis: 'AI service is temporarily unavailable. Please try again shortly.',
-    }, { status: 200 });
+      analysis: friendlyError,
+    }, { status: errorMessage.includes('413') ? 413 : 500 });
   }
 }

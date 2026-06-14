@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGeminiChatModel } from '@/lib/gemini';
+import { adminFirestore } from '@/lib/firebase-admin';
 import { z } from 'zod';
 
 const chatSchema = z.object({
@@ -8,6 +9,7 @@ const chatSchema = z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
   })).optional().default([]),
+  userId: z.string().optional().default('anonymous'),
 });
 
 export async function POST(request: NextRequest) {
@@ -19,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { message, history } = parsed.data;
+    const { message, history, userId } = parsed.data;
     
     const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -28,50 +30,61 @@ export async function POST(request: NextRequest) {
 
     const model = getGeminiChatModel();
 
-    const systemContext = `You are THADAM AI — an expert sustainability coach and environmental advisor.
-You help users understand their carbon footprint, make eco-friendly choices, recycle properly, and live more sustainably.
-You are knowledgeable about waste management, renewable energy, carbon offsetting, sustainable products, and environmental science.
-Keep responses helpful, concise, and actionable. Use markdown formatting for structure.
-Always be encouraging about sustainability efforts.
+    const systemContext = `You are THADAM AI.
+You are a sustainability expert powered by Gemini.
+Help users reduce carbon emissions, recycle correctly, and live more sustainably.
+If the question is unrelated to sustainability, still answer helpfully using Gemini knowledge.`;
 
-IMPORTANT INSTRUCTION FOR MAPS:
-If the user asks to find, show, or locate recycling centers, smart bins, e-waste collection points, or any place near a specific location (e.g. "near Chennai", "in Ambattur"), you MUST include the following tag anywhere in your response:
-[MAP_SEARCH:Location Name]
-For example: [MAP_SEARCH:Chennai] or [MAP_SEARCH:Ambattur]
-Do not use this tag unless the user specifically asks for locations or places.`;
-
-    const parts = [systemContext];
+    const parts = [{ text: systemContext }];
     for (const msg of history.slice(-10)) {
-      parts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
+      parts.push({ text: `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}` });
     }
-    parts.push(`User: ${message}`);
-    parts.push('Assistant:');
+    parts.push({ text: `User: ${message}\nAssistant:` });
 
-    // Timeout handling using AbortController and Promise.race
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    // Generate streaming response
+    const resultStream = await model.generateContentStream(parts.map(p => p.text).join('\n\n'));
 
-    let text = '';
-    try {
-      const result = await Promise.race([
-        model.generateContent(parts.join('\n\n')),
-        new Promise((_, reject) => {
-          controller.signal.addEventListener('abort', () => reject(new Error('TIMEOUT')));
-        })
-      ]) as any;
-      text = result.response.text();
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    // Create a ReadableStream from the generator
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        let fullResponse = '';
+        try {
+          for await (const chunk of resultStream.stream) {
+            const chunkText = chunk.text();
+            fullResponse += chunkText;
+            controller.enqueue(encoder.encode(chunkText));
+          }
+          
+          // Save to Firestore after stream completes
+          try {
+            await adminFirestore.collection('ai_conversations').add({
+              userId,
+              prompt: message,
+              response: fullResponse,
+              timestamp: new Date().toISOString(),
+            });
+          } catch (dbErr) {
+            console.error('[Firestore Error] Failed to save chat:', dbErr);
+          }
+          
+        } catch (err: any) {
+          console.error('[Stream Error]', err);
+          controller.error(err);
+        } finally {
+          controller.close();
+        }
+      }
+    });
 
-    return NextResponse.json({ 
-      response: text,
-      timestamp: new Date().toISOString(),
-      model: 'gemini-2.5-flash',
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
     });
 
   } catch (error: any) {
-    // Structured server-side logging
     const errorMessage = error?.message || 'Unknown Error';
     console.error(JSON.stringify({
       logType: '[Gemini Chat Error]',
@@ -79,12 +92,6 @@ Do not use this tag unless the user specifically asks for locations or places.`;
       stack: error?.stack,
       timestamp: new Date().toISOString()
     }));
-
-    // Fallback response - never show 403, 500, Stack trace, or Consumer suspended to users.
-    return NextResponse.json({ 
-      response: 'AI service is temporarily unavailable. Please try again shortly.',
-      timestamp: new Date().toISOString(),
-      model: 'fallback'
-    }, { status: 200 }); // Returning 200 to prevent client crash, with graceful fallback message
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
