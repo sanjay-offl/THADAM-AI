@@ -7,6 +7,7 @@ import { storage, db, auth } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -132,7 +133,7 @@ export default function ProfilePage() {
               onClick={() => isEditing && fileInputRef.current?.click()}
             >
               {profileData.photoURL ? (
-                <img src={profileData.photoURL} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <Image src={profileData.photoURL} alt="Profile" width={120} height={120} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 profileData.name?.substring(0, 2).toUpperCase() || 'U'
               )}

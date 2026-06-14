@@ -27,7 +27,7 @@ const EMISSION_FACTORS = {
 /**
  * Calculate carbon score (0-100, higher = better / lower footprint)
  */
-function calculateCarbonScore(input: CarbonAssessmentInput): number {
+export function calculateCarbonScore(input: CarbonAssessmentInput): number {
   const totalEmission =
     input.transportation * EMISSION_FACTORS.transportation +
     input.electricity * EMISSION_FACTORS.electricity +
@@ -47,7 +47,7 @@ function calculateCarbonScore(input: CarbonAssessmentInput): number {
 /**
  * Get eco rank from score
  */
-function getEcoRank(score: number): string {
+export function getEcoRank(score: number): string {
   const found = ECO_RANKS.find((r) => score >= r.min && score <= r.max);
   return found?.rank || 'Eco Beginner';
 }
@@ -55,7 +55,7 @@ function getEcoRank(score: number): string {
 /**
  * Calculate total carbon footprint in kgCO2
  */
-function calculateTotalCarbon(input: CarbonAssessmentInput): number {
+export function calculateTotalCarbon(input: CarbonAssessmentInput): number {
   return parseFloat(
     (
       input.transportation * EMISSION_FACTORS.transportation +

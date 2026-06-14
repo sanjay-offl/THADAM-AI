@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import GlassCard from '@/components/ui/GlassCard';
 import Button from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface ScanResult {
   detectedItem: string;
@@ -178,7 +179,7 @@ export default function ScanClient() {
               <motion.div key="analyzing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{ textAlign: 'center', padding: 'var(--space-2xl) 0' }}>
                 <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto var(--space-lg)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                  <img src={imageSrc} alt="Analyzing" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+                  <Image src={imageSrc} alt="Analyzing" fill style={{ objectFit: 'cover', opacity: 0.5 }} unoptimized />
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div className="scan-spinner" />
                   </div>
@@ -208,8 +209,8 @@ export default function ScanClient() {
             {mode === 'result' && result && imageSrc && (
               <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div className="scan-result-grid">
-                  <div style={{ width: '100%', aspectRatio: '1', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                    <img src={imageSrc} alt="Scanned" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <Image src={imageSrc} alt="Scanned" fill style={{ objectFit: 'cover' }} unoptimized />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>

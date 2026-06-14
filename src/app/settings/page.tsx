@@ -7,6 +7,7 @@ import { Camera, Save, Download, Trash2, Key, Bell, Shield, User, Monitor, Smart
 
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import Image from 'next/image';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('account');
@@ -176,7 +177,7 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
                 <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'var(--surface)', border: '2px dashed var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                   {profileImagePreview ? (
-                    <img src={profileImagePreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <Image src={profileImagePreview} alt="Profile" width={100} height={100} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <User size={40} color="var(--muted)" />
                   )}

@@ -42,7 +42,7 @@ export default function NotFound() {
           lineHeight: 1.6,
           marginBottom: 'var(--space-2xl)',
         }}>
-          The page you are looking for might have been removed, had its name changed, or is temporarily unavailable. Let's get you back on track.
+          The page you are looking for might have been removed, had its name changed, or is temporarily unavailable. Let&apos;s get you back on track.
         </p>
         <Link href="/" className="btn btn-primary" style={{
           display: 'inline-flex',
