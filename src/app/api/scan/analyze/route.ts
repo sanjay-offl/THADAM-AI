@@ -1,30 +1,36 @@
-// ============================================
-// THADAM AI — Scan Analyze API (Public)
-// POST /api/scan/analyze
-// ============================================
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getGeminiVisionModel } from '@/lib/gemini';
 
+// Max file size: 4MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'Gemini API key not configured. Add GEMINI_API_KEY to .env.local' },
-        { status: 500 },
-      );
-    }
-
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { image, mimeType = 'image/jpeg' } = body;
 
     if (!image) {
       return NextResponse.json({ error: 'Image data is required' }, { status: 400 });
     }
 
+    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+      return NextResponse.json({ error: 'Invalid file format. Only JPG, PNG, and WEBP are supported.' }, { status: 400 });
+    }
+
     // Strip data URL prefix if present
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+
+    // Validate size roughly (base64 string length * 0.75 is approx byte size)
+    const approximateSize = base64Data.length * 0.75;
+    if (approximateSize > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 4MB limit.' }, { status: 400 });
+    }
+
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Gemini API key missing' }, { status: 400 });
+    }
 
     const model = getGeminiVisionModel();
 
@@ -32,51 +38,64 @@ export async function POST(request: NextRequest) {
     
 Respond ONLY with a valid JSON object. Do not include markdown blocks like \`\`\`json.
 {
-  "detectedItem": "specific item name (e.g. Plastic Water Bottle, Cardboard Box, Aluminum Can)",
-  "material": "material type (e.g. PET Plastic, Corrugated Cardboard, Aluminum)",
-  "category": "waste category (e.g. Recyclable Plastic, Recyclable Metal, Compostable, E-Waste, Hazardous, General Waste)",
+  "wasteType": "specific item name (e.g. Plastic Water Bottle, Cardboard Box, Aluminum Can)",
   "recyclable": true or false,
   "carbonImpact": "Low / Medium / High",
-  "carbonImpactKg": estimated kg CO2 as a number,
-  "disposalMethod": "specific disposal instructions",
-  "sustainabilityTip": "a practical recommendation for the user",
-  "confidence": confidence score 0 to 100
+  "confidence": confidence score 0 to 100,
+  "disposalMethod": "Recycle/Compost/Landfill/Special Disposal",
+  "analysis": "a practical recommendation and detailed analysis for the user"
 }`;
 
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType,
-          data: base64Data,
-        },
-      },
-    ]);
+    // Timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-    const text = result.response.text();
-
+    let text = '';
     try {
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON in response: ' + text);
-      const parsed = JSON.parse(jsonMatch[0]);
-
-      return NextResponse.json({ success: true, ...parsed });
-    } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
-      return NextResponse.json({ error: 'Failed to analyze the image correctly. Please try again.' }, { status: 500 });
+      const result = await Promise.race([
+        model.generateContent([
+          { text: prompt },
+          {
+            inlineData: {
+              mimeType,
+              data: base64Data,
+            },
+          },
+        ]),
+        new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => reject(new Error('TIMEOUT')));
+        })
+      ]) as any;
+      text = result.response.text();
+    } finally {
+      clearTimeout(timeoutId);
     }
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in response: ' + text);
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    return NextResponse.json(parsed);
+
   } catch (error: any) {
-    console.error('[Scan API] Error:', error);
+    // Structured server-side logging
+    const errorMessage = error?.message || 'Unknown Error';
+    console.error(JSON.stringify({
+      logType: '[Gemini Vision Error]',
+      message: errorMessage,
+      stack: error?.stack,
+      timestamp: new Date().toISOString()
+    }));
 
-    const errorMessage = error?.message || 'Unknown error';
-    if (errorMessage.includes('QUOTA') || errorMessage.includes('429')) {
-      return NextResponse.json({ error: 'API quota exceeded. Please try again later.' }, { status: 429 });
-    }
-    if (errorMessage.includes('API_KEY') || errorMessage.includes('401')) {
-      return NextResponse.json({ error: 'Invalid Gemini API key. Please check your configuration.' }, { status: 401 });
-    }
-
-    return NextResponse.json({ error: 'Failed to analyze image. Please try again.' }, { status: 500 });
+    // Fallback response - never show 403, 500, Stack trace, or Consumer suspended to users.
+    return NextResponse.json({ 
+      wasteType: 'Unknown',
+      recyclable: false,
+      carbonImpact: 'Unknown',
+      confidence: 0,
+      disposalMethod: 'Landfill',
+      analysis: 'AI service is temporarily unavailable. Please try again shortly.',
+    }, { status: 200 });
   }
 }

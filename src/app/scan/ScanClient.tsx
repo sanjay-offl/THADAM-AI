@@ -7,15 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
 interface ScanResult {
-  detectedItem: string;
-  material: string;
-  category: string;
+  wasteType: string;
   recyclable: boolean;
   carbonImpact: string;
-  carbonImpactKg: number;
-  disposalMethod: string;
-  sustainabilityTip: string;
   confidence: number;
+  disposalMethod: string;
+  analysis: string;
 }
 
 export default function ScanClient() {
@@ -99,15 +96,12 @@ export default function ScanClient() {
       }
 
       setResult({
-        detectedItem: data.detectedItem || 'Unknown',
-        material: data.material || 'Unknown',
-        category: data.category || 'General Waste',
+        wasteType: data.wasteType || 'Unknown',
         recyclable: data.recyclable ?? false,
         carbonImpact: data.carbonImpact || 'Unknown',
-        carbonImpactKg: data.carbonImpactKg || 0,
-        disposalMethod: data.disposalMethod || 'Dispose in general waste',
-        sustainabilityTip: data.sustainabilityTip || '',
         confidence: data.confidence || 0,
+        disposalMethod: data.disposalMethod || 'Landfill',
+        analysis: data.analysis || '',
       });
       setMode('result');
     } catch (err: any) {
@@ -216,7 +210,7 @@ export default function ScanClient() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 6 }}>
-                        <h2 className="font-heading" style={{ margin: 0, fontSize: 'var(--text-2xl)' }}>{result.detectedItem}</h2>
+                        <h2 className="font-heading" style={{ margin: 0, fontSize: 'var(--text-2xl)' }}>{result.wasteType}</h2>
                         <span className="badge" style={{
                           background: result.recyclable ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
                           color: result.recyclable ? '#10B981' : '#EF4444'
@@ -231,20 +225,8 @@ export default function ScanClient() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
                       <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>Material</div>
-                        <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{result.material}</div>
-                      </div>
-                      <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>Category</div>
-                        <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{result.category}</div>
-                      </div>
-                      <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>Carbon Impact</div>
                         <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--primary)' }}>{result.carbonImpact}</div>
-                      </div>
-                      <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>CO₂ Estimate</div>
-                        <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{result.carbonImpactKg} kg</div>
                       </div>
                     </div>
 
@@ -253,10 +235,10 @@ export default function ScanClient() {
                       <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--muted)', lineHeight: 1.5 }}>{result.disposalMethod}</p>
                     </div>
 
-                    {result.sustainabilityTip && (
+                    {result.analysis && (
                       <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderLeft: '3px solid var(--secondary)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 'var(--text-sm)' }}>💡 Sustainability Tip</div>
-                        <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--muted)', lineHeight: 1.5 }}>{result.sustainabilityTip}</p>
+                        <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 'var(--text-sm)' }}>💡 Analysis</div>
+                        <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--muted)', lineHeight: 1.5 }}>{result.analysis}</p>
                       </div>
                     )}
 

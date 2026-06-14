@@ -2,7 +2,7 @@
 // THADAM AI — Gemini Chat Service
 // ============================================
 
-import { getGeminiModel } from '@/lib/gemini';
+import { getGeminiChatModel } from '@/lib/gemini';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -27,7 +27,7 @@ export async function chat(
   history: ChatMessage[] = [],
   _userId?: string,
 ): Promise<ChatResult> {
-  const model = getGeminiModel();
+  const model = getGeminiChatModel();
 
   // Build conversation context
   const conversationParts: string[] = [SYSTEM_CONTEXT];
@@ -50,7 +50,7 @@ export async function chat(
  * Get Carbon Twin analysis
  */
 export async function getCarbonTwinAnalysis(currentFootprint: number, categories: any) {
-  const model = getGeminiModel();
+  const model = getGeminiChatModel();
   
   const prompt = `Analyze this user's carbon footprint: ${currentFootprint} kg CO2e.
   Category breakdown: ${JSON.stringify(categories)}.
@@ -83,7 +83,7 @@ export async function getCarbonTwinAnalysis(currentFootprint: number, categories
  * Get AI Recommendations based on score
  */
 export async function getRecommendations(carbonScore: number, ecoRank: string) {
-  const model = getGeminiModel();
+  const model = getGeminiChatModel();
   
   const prompt = `User has a Carbon Score of ${carbonScore} and Eco Rank of ${ecoRank}.
   Generate 3 specific, actionable sustainability recommendations.

@@ -252,8 +252,15 @@ export default function ChatPage() {
             )}
 
             {error && (
-              <div style={{ textAlign: 'center', padding: 'var(--space-md)', color: 'var(--danger)', fontSize: 'var(--text-sm)', background: 'rgba(239,68,68,0.08)', borderRadius: 'var(--radius-md)' }}>
-                <strong>API Error:</strong> {error}
+              <div style={{ textAlign: 'center', padding: 'var(--space-md)', color: 'var(--danger)', fontSize: 'var(--text-sm)', background: 'rgba(239,68,68,0.08)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div><strong>API Error:</strong> {error}</div>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+                  if (lastUserMsg) {
+                    setInput(lastUserMsg.content);
+                    sendMessage();
+                  }
+                }}>Retry</Button>
               </div>
             )}
 

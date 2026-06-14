@@ -1,20 +1,32 @@
-import { describe, it, expect, vi } from 'vitest';
-import { analyzeWasteImage } from '@/services/scanner.service';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { POST } from '@/app/api/scan/analyze/route';
 import * as gemini from '@/lib/gemini';
+import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/gemini', () => ({
   getGeminiVisionModel: vi.fn(),
 }));
 
-describe('Scanner Service', () => {
+describe('Scanner API Route', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env = { ...originalEnv, GEMINI_API_KEY: 'test-api-key' };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it('should parse valid JSON response from Gemini', async () => {
     const mockResponse = {
       wasteType: 'Plastic Bottle',
       recyclable: true,
-      carbonImpact: 0.5,
+      carbonImpact: 'Low',
+      confidence: 95,
       disposalMethod: 'Recycle',
-      confidence: 0.95,
-      suggestions: ['Wash before recycling'],
+      analysis: 'Wash before recycling',
     };
 
     const mockGenerateContent = vi.fn().mockResolvedValue({
@@ -27,14 +39,20 @@ describe('Scanner Service', () => {
       generateContent: mockGenerateContent,
     } as any);
 
-    const result = await analyzeWasteImage('base64data');
+    const req = new NextRequest('http://localhost/api/scan/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ image: 'data:image/jpeg;base64,data', mimeType: 'image/jpeg' })
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
 
     expect(gemini.getGeminiVisionModel).toHaveBeenCalled();
     expect(mockGenerateContent).toHaveBeenCalled();
-    expect(result).toEqual(mockResponse);
+    expect(json).toEqual(mockResponse);
   });
 
-  it('should handle invalid JSON from Gemini gracefully', async () => {
+  it('should handle invalid JSON from Gemini with fallback', async () => {
     const mockGenerateContent = vi.fn().mockResolvedValue({
       response: {
         text: () => 'Sorry, I cannot analyze this image.',
@@ -45,9 +63,15 @@ describe('Scanner Service', () => {
       generateContent: mockGenerateContent,
     } as any);
 
-    const result = await analyzeWasteImage('base64data');
+    const req = new NextRequest('http://localhost/api/scan/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ image: 'data:image/jpeg;base64,data', mimeType: 'image/jpeg' })
+    });
 
-    expect(result.wasteType).toBe('Unknown');
-    expect(result.recyclable).toBe(false);
+    const res = await POST(req);
+    const json = await res.json();
+
+    expect(json.wasteType).toBe('Unknown');
+    expect(json.recyclable).toBe(false);
   });
 });
