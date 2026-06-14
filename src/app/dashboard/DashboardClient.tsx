@@ -84,7 +84,8 @@ function SortableWidget({ id, children, colSpan = 1 }: { id: string, children: R
 }
 
 const DEFAULT_WIDGET_ORDER = [
-  'carbon-score',
+  'earth-health-index',
+  'daily-eco-score',
   'carbon-saved',
   'reward-points',
   'trees-equivalent',
@@ -143,18 +144,33 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
   const renderWidget = (id: string) => {
     switch (id) {
-      case 'carbon-score':
+      case 'earth-health-index':
         return (
           <SortableWidget key={id} id={id}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Carbon Score</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Earth Health Index</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: 'var(--space-sm)' }}>
-                  <span style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{carbonScore}</span>
+                  <span style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>92</span>
                   <span style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>/100</span>
                 </div>
               </div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>Top 4% of active users this month</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>Global THADAM signature metric</div>
+            </div>
+          </SortableWidget>
+        );
+      case 'daily-eco-score':
+        return (
+          <SortableWidget key={id} id={id}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Eco Score</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: 'var(--space-sm)' }}>
+                  <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#10b981', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{carbonScore}</span>
+                  <span style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>/100</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>Based on transport, energy, food</div>
             </div>
           </SortableWidget>
         );

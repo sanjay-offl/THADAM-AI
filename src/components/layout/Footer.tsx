@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import Logo from '@/components/ui/Logo';
-
 const footerLinks = [
   {
     title: 'Platform',
     links: [
       { label: 'About', href: '/about' },
+      { label: 'Technology', href: '/technology' },
       { label: 'Contact', href: '/contact' },
     ],
   },

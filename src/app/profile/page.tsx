@@ -192,14 +192,48 @@ export default function ProfilePage() {
             </div>
           </div>
           
-          <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-xl)' }}>
-            <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--primary)' }}>8,450</div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Carbon Points</div>
+          <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-md)', marginTop: 'var(--space-xl)' }}>
+            <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center', background: 'rgba(16, 185, 129, 0.05)' }}>
+              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>92/100</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Earth Health Index</div>
             </div>
             <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--accent)' }}>142</div>
+              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>8,450</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Eco Points</div>
+            </div>
+            <div style={{ padding: 'var(--space-md)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--text-3xl)', fontWeight: 'bold', color: 'var(--accent)', fontFamily: 'var(--font-heading)' }}>142</div>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items Recycled</div>
+            </div>
+          </div>
+          
+          <div style={{ width: '100%', marginTop: 'var(--space-2xl)' }}>
+            <h3 className="font-heading" style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>Badges & Achievements</h3>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              {['🌱 First Tree Saved', '♻️ Recycling Master', '🚲 Commuter Pro', '🌍 Earth Guardian'].map(badge => (
+                <div key={badge} style={{ padding: '8px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 'var(--text-sm)' }}>
+                  {badge}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ width: '100%', marginTop: 'var(--space-2xl)' }}>
+            <h3 className="font-heading" style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>Activity Timeline</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+              {[
+                { title: 'Recycled 3 Plastic Bottles', time: '2 hours ago', pts: '+75 pts' },
+                { title: 'Completed Daily Quest: Walk 5km', time: 'Yesterday', pts: '+150 pts' },
+                { title: 'Achieved 7-Day Recycling Streak', time: '2 days ago', pts: '+500 pts' }
+              ].map((act, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-md)', borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{act.title}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>{act.time}</div>
+                  </div>
+                  <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{act.pts}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

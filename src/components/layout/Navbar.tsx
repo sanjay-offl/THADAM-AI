@@ -200,11 +200,38 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/dashboard" className="navbar-link">Dashboard</Link>
-                <Link href="/carbon" className="navbar-link">Carbon</Link>
-                <Link href="/scan" className="navbar-link">Scan</Link>
-                <Link href="/chat" className="navbar-link">Chat</Link>
-                <Link href="/rewards" className="navbar-link">Rewards</Link>
-                <Link href="/machines" className="navbar-link">Machines</Link>
+                <div className="navbar-dropdown-group" onMouseEnter={() => {}} onMouseLeave={() => {}}>
+                  <button className="navbar-link navbar-dropdown-trigger">Impact <ChevronDown size={14} /></button>
+                  <div className="navbar-dropdown-menu">
+                    <Link href="/carbon" className="navbar-dropdown-item">My Carbon</Link>
+                    <Link href="/carbon-twin" className="navbar-dropdown-item">Carbon Twin AI</Link>
+                    <Link href="/analytics" className="navbar-dropdown-item">Global Analytics</Link>
+                  </div>
+                </div>
+                <div className="navbar-dropdown-group">
+                  <button className="navbar-link navbar-dropdown-trigger">Action <ChevronDown size={14} /></button>
+                  <div className="navbar-dropdown-menu">
+                    <Link href="/scan" className="navbar-dropdown-item">Smart Scanner</Link>
+                    <Link href="/chat" className="navbar-dropdown-item">AI Coach</Link>
+                    <Link href="/challenges" className="navbar-dropdown-item">Quests & Streaks</Link>
+                  </div>
+                </div>
+                <div className="navbar-dropdown-group">
+                  <button className="navbar-link navbar-dropdown-trigger">Network <ChevronDown size={14} /></button>
+                  <div className="navbar-dropdown-menu">
+                    <Link href="/machines" className="navbar-dropdown-item">Smart Machines</Link>
+                    <Link href="/community" className="navbar-dropdown-item">Community</Link>
+                    <Link href="/rewards" className="navbar-dropdown-item">Rewards</Link>
+                  </div>
+                </div>
+                <div className="navbar-dropdown-group">
+                  <button className="navbar-link navbar-dropdown-trigger">Learn <ChevronDown size={14} /></button>
+                  <div className="navbar-dropdown-menu">
+                    <Link href="/blogs" className="navbar-dropdown-item">Knowledge Hub</Link>
+                    <Link href="/research" className="navbar-dropdown-item">Research</Link>
+                    <Link href="/technology" className="navbar-dropdown-item">Technology</Link>
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -315,10 +342,17 @@ export default function Navbar() {
                   <>
                     <Link href="/dashboard" onClick={() => setIsOpen(false)} className="mobile-nav-link">Dashboard</Link>
                     <Link href="/carbon" onClick={() => setIsOpen(false)} className="mobile-nav-link">Carbon</Link>
-                    <Link href="/scan" onClick={() => setIsOpen(false)} className="mobile-nav-link">Scan</Link>
-                    <Link href="/chat" onClick={() => setIsOpen(false)} className="mobile-nav-link">Chat</Link>
-                    <Link href="/rewards" onClick={() => setIsOpen(false)} className="mobile-nav-link">Rewards</Link>
+                    <Link href="/carbon-twin" onClick={() => setIsOpen(false)} className="mobile-nav-link">Carbon Twin</Link>
+                    <Link href="/scan" onClick={() => setIsOpen(false)} className="mobile-nav-link">Scanner</Link>
+                    <Link href="/chat" onClick={() => setIsOpen(false)} className="mobile-nav-link">AI Coach</Link>
+                    <Link href="/challenges" onClick={() => setIsOpen(false)} className="mobile-nav-link">Challenges</Link>
                     <Link href="/machines" onClick={() => setIsOpen(false)} className="mobile-nav-link">Machines</Link>
+                    <Link href="/rewards" onClick={() => setIsOpen(false)} className="mobile-nav-link">Rewards</Link>
+                    <Link href="/analytics" onClick={() => setIsOpen(false)} className="mobile-nav-link">Analytics</Link>
+                    <Link href="/community" onClick={() => setIsOpen(false)} className="mobile-nav-link">Community</Link>
+                    <Link href="/blogs" onClick={() => setIsOpen(false)} className="mobile-nav-link">Blogs</Link>
+                    <Link href="/research" onClick={() => setIsOpen(false)} className="mobile-nav-link">Research</Link>
+                    <Link href="/technology" onClick={() => setIsOpen(false)} className="mobile-nav-link">Technology</Link>
                   </>
                 )}
               </div>
@@ -435,24 +469,22 @@ export default function Navbar() {
           color: var(--text);
         }
         .navbar-user-btn:hover {
-          border-color: var(--primary);
           background: var(--navbar-hover-bg);
         }
         .navbar-avatar {
-          width: 32px;
-          height: 32px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
           background: var(--primary);
+          color: white;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #fff;
-          font-weight: 700;
-          font-size: 14px;
-          flex-shrink: 0;
+          font-size: 12px;
+          font-weight: bold;
         }
         .navbar-username {
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 500;
           max-width: 100px;
           overflow: hidden;
@@ -479,6 +511,39 @@ export default function Navbar() {
         .navbar-cta:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+
+        /* Dropdown Group */
+        .navbar-dropdown-group {
+          position: relative;
+        }
+        .navbar-dropdown-trigger {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+        .navbar-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          min-width: 200px;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          padding: 8px;
+          box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(10px);
+          transition: all 0.2s;
+        }
+        .navbar-dropdown-group:hover .navbar-dropdown-menu {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
         }
 
         /* Dropdown */
