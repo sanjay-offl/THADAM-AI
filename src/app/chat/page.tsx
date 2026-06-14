@@ -145,13 +145,10 @@ export default function ChatPage() {
     const startTime = Date.now();
 
     try {
-      setDebugData(p => ({ ...p, status: 'Calling Gemini...' }));
+      setDebugData(p => ({ ...p, status: 'Calling AI...' }));
       const history = messages
         .filter(m => m.id !== '0')
         .map(m => ({ role: m.role, content: m.content }));
-
-      const { auth } = await import('@/lib/firebase');
-      const userId = auth.currentUser?.uid || 'anonymous';
 
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -159,59 +156,66 @@ export default function ChatPage() {
         body: JSON.stringify({
           message: userMessage.content,
           history,
-          userId,
         }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to get response');
-      }
-
-      if (!res.body) throw new Error('No response body');
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      
+      const contentType = res.headers.get('content-type') || '';
       const aiMessageId = (Date.now() + 1).toString();
-      setMessages(prev => [...prev, {
-        id: aiMessageId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-      }]);
-      setIsLoading(false); // Stop typing indicator, start streaming
 
-      let done = false;
-      let fullResponseText = '';
+      if (contentType.includes('text/plain') && res.body) {
+        // ── Streaming Gemini response ──
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        
+        setMessages(prev => [...prev, { id: aiMessageId, role: 'assistant', content: '', timestamp: new Date() }]);
+        setIsLoading(false);
 
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          fullResponseText += chunk;
-          setMessages(prev => 
-            prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + chunk } : m)
-          );
+        let done = false;
+        let fullResponseText = '';
+
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            fullResponseText += chunk;
+            setMessages(prev => 
+              prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + chunk } : m)
+            );
+          }
         }
-      }
 
-      // Check for map intent after streaming completes
-      const mapMatch = fullResponseText.match(/\[MAP_SEARCH:(.*?)\]/);
-      if (mapMatch) {
-        const locationToSearch = mapMatch[1].trim();
-        setMessages(prev => 
-          prev.map(m => m.id === aiMessageId ? { ...m, content: m.content.replace(/\[MAP_SEARCH:.*?\]/g, '').trim() } : m)
-        );
-        handleMapSearch(locationToSearch);
+        // Check for map intent
+        const mapMatch = fullResponseText.match(/\[MAP_SEARCH:(.*?)\]/);
+        if (mapMatch) {
+          const locationToSearch = mapMatch[1].trim();
+          setMessages(prev => 
+            prev.map(m => m.id === aiMessageId ? { ...m, content: m.content.replace(/\[MAP_SEARCH:.*?\]/g, '').trim() } : m)
+          );
+          handleMapSearch(locationToSearch);
+        }
+      } else {
+        // ── JSON fallback (offline KB) ──
+        const data = await res.json();
+        setMessages(prev => [...prev, {
+          id: aiMessageId,
+          role: 'assistant',
+          content: data.response || 'I can help you with sustainability topics. Try asking about recycling, carbon footprint, or energy saving!',
+          timestamp: new Date(),
+        }]);
+        setIsLoading(false);
       }
 
       setDebugData(p => ({ ...p, status: 'Success', lastRequest: Date.now() - startTime }));
     } catch (err: any) {
-      const actualError = err.message || 'Unknown network error';
-      setError(actualError);
-      setDebugData(p => ({ ...p, status: 'Error: ' + actualError, lastRequest: Date.now() - startTime }));
+      // Never show raw errors — provide a helpful message
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '🔄 *THADAM AI is temporarily connecting...* Please try again in a moment.\n\nIn the meantime, you can ask me about:\n• Recycling tips\n• Carbon footprint reduction\n• Energy saving\n• Sustainable living',
+        timestamp: new Date(),
+      }]);
+      setDebugData(p => ({ ...p, status: 'Fallback', lastRequest: Date.now() - startTime }));
       setIsLoading(false);
     } finally {
       inputRef.current?.focus();
@@ -340,13 +344,15 @@ export default function ChatPage() {
           </div>
 
           {/* Input */}
-          <div style={{ padding: 'var(--space-md)', borderTop: '1px solid var(--border)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
+          <div style={{ padding: 'var(--space-md)', borderTop: '1px solid var(--border)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }} role="form" aria-label="Chat message input">
             <textarea
               ref={inputRef}
+              id="chat-input"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about sustainability, or 'Show recycling centers in Chennai'..."
+              aria-label="Type your message"
               rows={1}
               style={{
                 flex: 1,
@@ -362,7 +368,7 @@ export default function ChatPage() {
                 lineHeight: 1.5,
               }}
             />
-            <Button variant="primary" onClick={sendMessage} disabled={!input.trim() || isLoading} style={{ height: 44, padding: '0 20px' }}>
+            <Button variant="primary" onClick={sendMessage} disabled={!input.trim() || isLoading} style={{ height: 44, padding: '0 20px' }} aria-label="Send message">
               {isLoading ? '...' : 'Send'}
             </Button>
           </div>
@@ -380,6 +386,7 @@ export default function ChatPage() {
               <MapComponent machines={[]} selectedMachineId={null} searchedLocation={searchedLocation} />
               <button 
                 onClick={() => setShowMap(false)}
+                aria-label="Close map"
                 style={{ position: 'absolute', top: 12, right: 12, background: 'var(--surface)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
               >
                 ✕

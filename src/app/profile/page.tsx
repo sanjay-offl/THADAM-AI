@@ -153,31 +153,31 @@ export default function ProfilePage() {
           <div style={{ width: '100%', marginTop: 'var(--space-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Full Name</label>
-                <input disabled={!isEditing} value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                <label htmlFor="profile-name" style={{ fontSize: '12px', color: 'var(--muted)' }}>Full Name</label>
+                <input id="profile-name" disabled={!isEditing} value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} aria-label="Full Name" className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Email</label>
-                <input disabled={true} value={profileData.email} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)', opacity: 0.7 }} />
+                <label htmlFor="profile-email" style={{ fontSize: '12px', color: 'var(--muted)' }}>Email</label>
+                <input id="profile-email" disabled={true} value={profileData.email} aria-label="Email address" className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)', opacity: 0.7 }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Phone</label>
-                <input disabled={!isEditing} value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                <label htmlFor="profile-phone" style={{ fontSize: '12px', color: 'var(--muted)' }}>Phone</label>
+                <input id="profile-phone" disabled={!isEditing} value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} aria-label="Phone number" className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Location</label>
-                <input disabled={!isEditing} value={profileData.location} onChange={e => setProfileData({...profileData, location: e.target.value})} className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                <label htmlFor="profile-location" style={{ fontSize: '12px', color: 'var(--muted)' }}>Location</label>
+                <input id="profile-location" disabled={!isEditing} value={profileData.location} onChange={e => setProfileData({...profileData, location: e.target.value})} aria-label="Location" className="input-field" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Bio</label>
-              <textarea disabled={!isEditing} value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
+              <label htmlFor="profile-bio" style={{ fontSize: '12px', color: 'var(--muted)' }}>Bio</label>
+              <textarea id="profile-bio" disabled={!isEditing} value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} aria-label="Bio" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
             </div>
 
             <div>
-              <label style={{ fontSize: '12px', color: 'var(--muted)' }}>Carbon Goals</label>
-              <textarea disabled={!isEditing} value={profileData.carbonGoals} onChange={e => setProfileData({...profileData, carbonGoals: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
+              <label htmlFor="profile-goals" style={{ fontSize: '12px', color: 'var(--muted)' }}>Carbon Goals</label>
+              <textarea id="profile-goals" disabled={!isEditing} value={profileData.carbonGoals} onChange={e => setProfileData({...profileData, carbonGoals: e.target.value})} aria-label="Carbon Goals" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 80 }} />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 'var(--space-md)' }}>

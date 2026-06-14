@@ -79,10 +79,11 @@ export default function RootLayout({
           <ConfigErrorPage report={envReport} />
         ) : (
           <ThemeProvider>
+            <a href="#main-content" className="skip-to-content" aria-label="Skip to main content">Skip to content</a>
             <GradientMesh />
             <FloatingLeaves />
             <Navbar />
-            <main style={{ minHeight: '100vh', paddingTop: 'var(--navbar-height)' }}>
+            <main id="main-content" role="main" aria-label="Page content" style={{ minHeight: '100vh', paddingTop: 'var(--navbar-height)' }}>
               {children}
             </main>
             <Footer />

@@ -21,11 +21,23 @@ interface MachinesClientProps {
 }
 
 const MOCK_MACHINES: any[] = [
-  { id: 'm1', name: 'THADAM-ECO-001', address: 'Chennai Central Station, Main Entrance', lat: 13.0827, lng: 80.2707, status: 'Online', fillLevel: 45, lastUpdated: 'Just now' },
-  { id: 'm2', name: 'THADAM-ECO-002', address: 'IIT Madras Campus, Food Court', lat: 12.9916, lng: 80.2336, status: 'Online', fillLevel: 82, lastUpdated: '2 mins ago' },
-  { id: 'm3', name: 'THADAM-ECO-003', address: 'Marina Beach Entrance', lat: 13.0500, lng: 80.2824, status: 'Full', fillLevel: 100, lastUpdated: '10 mins ago' },
-  { id: 'm4', name: 'THADAM-ECO-004', address: 'Phoenix Mall, Velachery', lat: 12.9925, lng: 80.2157, status: 'Maintenance', fillLevel: 10, lastUpdated: '1 hour ago' },
-  { id: 'm5', name: 'THADAM-ECO-005', address: 'T Nagar Bus Terminus', lat: 13.0396, lng: 80.2330, status: 'Offline', fillLevel: 60, lastUpdated: '5 hours ago' },
+  // Chennai (5 machines)
+  { id: 'm1', name: 'GreenBin-001', address: 'Chennai Central Station, Main Entrance', lat: 13.0827, lng: 80.2707, status: 'Online', fillLevel: 45, lastUpdated: 'Just now', city: 'Chennai' },
+  { id: 'm2', name: 'GreenBin-002', address: 'IIT Madras Campus, Food Court', lat: 12.9916, lng: 80.2336, status: 'Online', fillLevel: 82, lastUpdated: '2 mins ago', city: 'Chennai' },
+  { id: 'm3', name: 'GreenBin-003', address: 'Marina Beach Entrance', lat: 13.0500, lng: 80.2824, status: 'Full', fillLevel: 100, lastUpdated: '10 mins ago', city: 'Chennai' },
+  { id: 'm4', name: 'GreenBin-004', address: 'Phoenix Mall, Velachery', lat: 12.9925, lng: 80.2157, status: 'Online', fillLevel: 33, lastUpdated: '5 mins ago', city: 'Chennai' },
+  { id: 'm5', name: 'GreenBin-005', address: 'T Nagar Bus Terminus', lat: 13.0396, lng: 80.2330, status: 'Online', fillLevel: 60, lastUpdated: '1 min ago', city: 'Chennai' },
+  // Coimbatore (2 machines)
+  { id: 'm6', name: 'GreenBin-006', address: 'Brookefields Mall, Coimbatore', lat: 11.0168, lng: 76.9558, status: 'Online', fillLevel: 28, lastUpdated: '3 mins ago', city: 'Coimbatore' },
+  { id: 'm7', name: 'GreenBin-007', address: 'PSG Tech Campus, Peelamedu', lat: 11.0234, lng: 77.0027, status: 'Online', fillLevel: 55, lastUpdated: '8 mins ago', city: 'Coimbatore' },
+  // Madurai (2 machines)
+  { id: 'm8', name: 'GreenBin-008', address: 'Meenakshi Amman Temple Gate', lat: 9.9195, lng: 78.1193, status: 'Online', fillLevel: 70, lastUpdated: '4 mins ago', city: 'Madurai' },
+  { id: 'm9', name: 'GreenBin-009', address: 'Madurai Junction Railway Station', lat: 9.9209, lng: 78.1201, status: 'Maintenance', fillLevel: 15, lastUpdated: '1 hour ago', city: 'Madurai' },
+  // Trichy (2 machines)
+  { id: 'm10', name: 'GreenBin-010', address: 'Trichy Bus Stand Complex', lat: 10.7905, lng: 78.7047, status: 'Online', fillLevel: 42, lastUpdated: '6 mins ago', city: 'Trichy' },
+  { id: 'm11', name: 'GreenBin-011', address: 'NIT Trichy Main Gate', lat: 10.7600, lng: 78.8138, status: 'Online', fillLevel: 18, lastUpdated: '2 mins ago', city: 'Trichy' },
+  // Salem (1 machine)
+  { id: 'm12', name: 'GreenBin-012', address: 'Salem Junction Railway Station', lat: 11.6643, lng: 78.1460, status: 'Online', fillLevel: 37, lastUpdated: '12 mins ago', city: 'Salem' },
 ];
 
 export default function MachinesClient({ user }: MachinesClientProps) {
@@ -167,6 +179,18 @@ export default function MachinesClient({ user }: MachinesClientProps) {
 
                 <div style={{ width: '100%', height: 4, background: 'var(--surface)', borderRadius: 2, marginTop: 12 }}>
                   <div style={{ width: `${m.fillLevel}%`, height: '100%', background: m.fillLevel >= 100 ? 'var(--warning)' : 'var(--primary)', borderRadius: 2, transition: 'width 0.5s' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: 12 }}>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Get directions to ${m.name}`}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-xs)', color: 'var(--primary)', textDecoration: 'none', padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--primary)', cursor: 'pointer' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Navigation size={12} /> Directions
+                  </a>
                 </div>
               </GlassCard>
             ))}
