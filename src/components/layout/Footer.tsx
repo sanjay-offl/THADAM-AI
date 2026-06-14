@@ -22,7 +22,7 @@ const footerLinks = [
     title: 'Support',
     links: [
       { label: 'Support Center', href: '/support' },
-      { label: 'GitHub', href: 'https://github.com/THADAM-AI' },
+      { label: 'GitHub', href: '/github' },
     ],
   },
 ];
