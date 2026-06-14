@@ -258,35 +258,27 @@ export default function ScanClient() {
     }
   };
 
-  const compressImage = (dataUrl: string): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
+  const generateThumbnail = (dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
       const img = new window.Image();
-      img.src = dataUrl;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > 1200) {
-          height = Math.round((height * 1200) / width);
-          width = 1200;
-        }
-        if (height > 1200) {
-          width = Math.round((width * 1200) / height);
-          height = 1200;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
+        const size = 150;
+        canvas.width = size;
+        canvas.height = size;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Compression failed'));
-        }, 'image/jpeg', 0.7);
+        if (ctx) {
+          const minDim = Math.min(img.width, img.height);
+          const startX = (img.width - minDim) / 2;
+          const startY = (img.height - minDim) / 2;
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        } else {
+          resolve(dataUrl);
+        }
       };
-      img.onerror = () => reject(new Error('Image load failed'));
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
     });
   };
 
@@ -315,16 +307,32 @@ export default function ScanClient() {
 
     // Save scan to history
     try {
+      const thumbnailUrl = await generateThumbnail(dataUrl);
       const historyStr = localStorage.getItem('scan-history');
-      const history = historyStr ? JSON.parse(historyStr) : [];
+      let history = historyStr ? JSON.parse(historyStr) : [];
       history.unshift({
         id: Date.now().toString(),
-        image: dataUrl,
+        image: thumbnailUrl,
         wasteType: finalResult.wasteType,
         points: finalResult.rewardPoints,
         timestamp: new Date().toISOString(),
       });
-      localStorage.setItem('scan-history', JSON.stringify(history.slice(0, 50))); // Keep last 50 scans
+      
+      history = history.slice(0, 50); // Keep last 50 scans
+      
+      let saved = false;
+      while (!saved && history.length > 0) {
+        try {
+          localStorage.setItem('scan-history', JSON.stringify(history));
+          saved = true;
+        } catch (e: any) {
+          if (e.name === 'QuotaExceededError' || (e.message && e.message.toLowerCase().includes('quota'))) {
+            history.pop();
+          } else {
+            throw e;
+          }
+        }
+      }
     } catch (e) {
       console.error('Failed to save scan history', e);
     }

@@ -55,6 +55,27 @@ describe('Machine Service', () => {
     });
   });
 
+  describe('getMachineById', () => {
+    it('should return machine by id', async () => {
+      const mockMachine = { id: 'm-1', name: 'Machine 1' };
+      vi.mocked(prisma.machine.findUnique).mockResolvedValueOnce(mockMachine as any);
+
+      const result = await getMachineById('m-1');
+      expect(prisma.machine.findUnique).toHaveBeenCalledWith({ 
+        where: { id: 'm-1' },
+        include: { _count: { select: { transactions: true } } }
+      });
+      expect(result).toEqual(mockMachine);
+    });
+
+    it('should return null if not found', async () => {
+      vi.mocked(prisma.machine.findUnique).mockResolvedValueOnce(null);
+
+      const result = await getMachineById('m-1');
+      expect(result).toBeNull();
+    });
+  });
+
   describe('findNearbyMachines', () => {
     it('should calculate distance and return nearby machines', async () => {
       // 1 deg latitude is ~111km
