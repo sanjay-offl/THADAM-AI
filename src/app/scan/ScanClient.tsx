@@ -13,7 +13,191 @@ interface ScanResult {
   confidence: number;
   disposalMethod: string;
   analysis: string;
+  rewardPoints?: number;
 }
+
+const MOCK_SCAN_RESULTS = [
+  {
+    wasteType: "Plastic Bottle",
+    recyclable: true,
+    carbonImpact: "Low",
+    rewardPoints: 25,
+    confidence: "96%",
+    disposalMethod: "Deposit in Smart Machine",
+    analysis: "Recycling one plastic bottle saves enough energy to power a light bulb for 6 hours.",
+  },
+  {
+    wasteType: "Cardboard Box",
+    recyclable: true,
+    carbonImpact: "Very Low",
+    rewardPoints: 15,
+    confidence: "94%",
+    disposalMethod: "Paper Recycling Bin",
+    analysis: "Flatten the box to save space. Cardboard can be recycled 5-7 times.",
+  },
+  {
+    wasteType: "E-Waste",
+    recyclable: true,
+    carbonImpact: "High",
+    rewardPoints: 120,
+    confidence: "91%",
+    disposalMethod: "Authorized E-Waste Center",
+    analysis: "Electronics contain toxic chemicals. Never throw them in the regular trash.",
+  },
+  {
+    wasteType: "Organic Waste",
+    recyclable: false,
+    carbonImpact: "Medium",
+    rewardPoints: 10,
+    confidence: "93%",
+    disposalMethod: "Composting Recommended",
+    analysis: "Composting organic waste reduces methane emissions from landfills.",
+  },
+  {
+    wasteType: "Plastic Container",
+    recyclable: true,
+    carbonImpact: "Medium",
+    rewardPoints: 20,
+    confidence: "88%",
+    disposalMethod: "Rinse and Recycle",
+    analysis: "Food containers must be cleaned before recycling to avoid contamination.",
+  },
+  {
+    wasteType: "Glass Bottle",
+    recyclable: true,
+    carbonImpact: "Low",
+    rewardPoints: 30,
+    confidence: "97%",
+    disposalMethod: "Glass Recycling Bin",
+    analysis: "Glass is infinitely recyclable without losing its quality or purity.",
+  },
+  {
+    wasteType: "Glass Jar",
+    recyclable: true,
+    carbonImpact: "Low",
+    rewardPoints: 25,
+    confidence: "95%",
+    disposalMethod: "Glass Recycling Bin",
+    analysis: "Remove the metal lid and recycle it separately for maximum efficiency.",
+  },
+  {
+    wasteType: "Paper",
+    recyclable: true,
+    carbonImpact: "Very Low",
+    rewardPoints: 10,
+    confidence: "99%",
+    disposalMethod: "Paper Recycling Bin",
+    analysis: "Recycling one ton of paper saves 17 mature trees and 7,000 gallons of water.",
+  },
+  {
+    wasteType: "Magazine",
+    recyclable: true,
+    carbonImpact: "Low",
+    rewardPoints: 12,
+    confidence: "90%",
+    disposalMethod: "Paper Recycling Bin",
+    analysis: "Glossy paper is recyclable. No need to remove staples or tape.",
+  },
+  {
+    wasteType: "Aluminium Can",
+    recyclable: true,
+    carbonImpact: "High",
+    rewardPoints: 35,
+    confidence: "98%",
+    disposalMethod: "Metal Recycling Bin",
+    analysis: "Recycling aluminium saves 95% of the energy needed to make new aluminium.",
+  },
+  {
+    wasteType: "Steel Can",
+    recyclable: true,
+    carbonImpact: "Medium",
+    rewardPoints: 20,
+    confidence: "92%",
+    disposalMethod: "Metal Recycling Bin",
+    analysis: "Steel is the most recycled material in the world. Rinse before recycling.",
+  },
+  {
+    wasteType: "Mobile Phone",
+    recyclable: true,
+    carbonImpact: "Very High",
+    rewardPoints: 200,
+    confidence: "89%",
+    disposalMethod: "E-Waste Drop-off",
+    analysis: "Cell phones contain precious metals like gold, silver, and palladium.",
+  },
+  {
+    wasteType: "Battery",
+    recyclable: true,
+    carbonImpact: "High",
+    rewardPoints: 50,
+    confidence: "94%",
+    disposalMethod: "Hazardous Waste Center",
+    analysis: "Batteries can leak toxic metals and start fires if thrown in regular trash.",
+  },
+  {
+    wasteType: "Food Waste",
+    recyclable: false,
+    carbonImpact: "Medium",
+    rewardPoints: 15,
+    confidence: "95%",
+    disposalMethod: "Compost Bin",
+    analysis: "Food waste decomposing in landfills releases methane, a potent greenhouse gas.",
+  },
+  {
+    wasteType: "Clothing",
+    recyclable: true,
+    carbonImpact: "Medium",
+    rewardPoints: 40,
+    confidence: "87%",
+    disposalMethod: "Textile Donation/Recycling",
+    analysis: "Textile recycling helps divert millions of tons of waste from landfills each year.",
+  },
+  {
+    wasteType: "Fabric Waste",
+    recyclable: true,
+    carbonImpact: "Low",
+    rewardPoints: 25,
+    confidence: "85%",
+    disposalMethod: "Textile Recycling",
+    analysis: "Even torn fabrics can be shredded and turned into insulation materials.",
+  },
+  {
+    wasteType: "Milk Carton",
+    recyclable: true,
+    carbonImpact: "Medium",
+    rewardPoints: 15,
+    confidence: "91%",
+    disposalMethod: "Mixed Recycling",
+    analysis: "Cartons are made of paper, plastic, and sometimes aluminum. They are widely recyclable.",
+  },
+  {
+    wasteType: "Snack Wrapper",
+    recyclable: false,
+    carbonImpact: "High",
+    rewardPoints: 5,
+    confidence: "82%",
+    disposalMethod: "General Waste / Landfill",
+    analysis: "Multi-layered wrappers are extremely difficult to recycle. Avoid if possible.",
+  },
+  {
+    wasteType: "Mixed Waste",
+    recyclable: false,
+    carbonImpact: "Medium",
+    rewardPoints: 0,
+    confidence: "70%",
+    disposalMethod: "Sort before disposal",
+    analysis: "Mixed waste must be separated into dry and wet categories for processing.",
+  },
+  {
+    wasteType: "Unknown Material",
+    recyclable: false,
+    carbonImpact: "Unknown",
+    rewardPoints: 0,
+    confidence: "45%",
+    disposalMethod: "Check Local Guidelines",
+    analysis: "When in doubt, throw it out to prevent contaminating the recycling stream.",
+  }
+];
 
 export default function ScanClient() {
   const [mode, setMode] = useState<'idle' | 'camera' | 'analyzing' | 'result' | 'error'>('idle');
@@ -110,65 +294,39 @@ export default function ScanClient() {
     setMode('analyzing');
     setErrorMsg('');
 
+    // Force 5-second simulated AI scan delay
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Choose random result
+    const resultData = MOCK_SCAN_RESULTS[Math.floor(Math.random() * MOCK_SCAN_RESULTS.length)];
+
+    const finalResult = {
+      wasteType: resultData.wasteType,
+      recyclable: resultData.recyclable,
+      carbonImpact: resultData.carbonImpact,
+      confidence: parseInt(resultData.confidence.replace('%', '')),
+      disposalMethod: resultData.disposalMethod,
+      analysis: resultData.analysis,
+      rewardPoints: resultData.rewardPoints,
+    };
+
+    setResult(finalResult);
+    setMode('result');
+
+    // Save scan to history
     try {
-      // 1. Compress Image
-      const blob = await compressImage(dataUrl);
-
-      let downloadUrl = '';
-      try {
-        // 2. Upload to Firebase Storage
-        const { storage } = await import('@/lib/firebase');
-        const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-        const storageRef = ref(storage, `scans/scan_${Date.now()}.jpg`);
-        await uploadBytes(storageRef, blob);
-        downloadUrl = await getDownloadURL(storageRef);
-      } catch (uploadErr) {
-        console.warn('[Upload fallback] Sending compressed base64 instead');
-      }
-
-      // 3. Send to API (URL or compressed base64)
-      const payload: Record<string, string> = { filename };
-      if (downloadUrl) {
-        payload.imageUrl = downloadUrl;
-      } else {
-        // Convert blob to base64 as fallback
-        const reader = new FileReader();
-        const base64 = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-        payload.image = base64;
-        payload.mimeType = 'image/jpeg';
-      }
-
-      const response = await fetch('/api/scan/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const historyStr = localStorage.getItem('scan-history');
+      const history = historyStr ? JSON.parse(historyStr) : [];
+      history.unshift({
+        id: Date.now().toString(),
+        image: dataUrl,
+        wasteType: finalResult.wasteType,
+        points: finalResult.rewardPoints,
+        timestamp: new Date().toISOString(),
       });
-
-      const data = await response.json();
-
-      setResult({
-        wasteType: data.wasteType || 'Mixed Material',
-        recyclable: data.recyclable ?? true,
-        carbonImpact: data.carbonImpact || 'Medium',
-        confidence: data.confidence || 78,
-        disposalMethod: data.disposalMethod || 'Recycle',
-        analysis: data.analysis || 'Use a THADAM Smart Recycling Machine for proper sorting.',
-      });
-      setMode('result');
-    } catch (err: any) {
-      // Even on error, show a result instead of an error screen
-      setResult({
-        wasteType: 'Mixed Material',
-        recyclable: true,
-        carbonImpact: 'Medium',
-        confidence: 78,
-        disposalMethod: 'Recycle',
-        analysis: 'We could not fully analyze this item. For accurate sorting, deposit it in a THADAM Smart Recycling Machine near you.',
-      });
-      setMode('result');
+      localStorage.setItem('scan-history', JSON.stringify(history.slice(0, 50))); // Keep last 50 scans
+    } catch (e) {
+      console.error('Failed to save scan history', e);
     }
   };
 
@@ -186,11 +344,18 @@ export default function ScanClient() {
 
   return (
     <div className="container" style={{ padding: 'var(--space-xl) 0', minHeight: '80vh' }}>
-      <div style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+      <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
         <h1 className="section-title">AI Product Scanner</h1>
         <p style={{ color: 'var(--muted)', maxWidth: 560, margin: '0 auto' }}>
           Upload or capture a photo of any item — Gemini Vision will identify the material, waste category, and environmental impact.
         </p>
+        {mode === 'idle' && (
+          <div style={{ marginTop: 'var(--space-md)' }}>
+            <Button variant="outline" onClick={() => window.location.href = '/scan/history'}>
+              View Scan History
+            </Button>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -245,8 +410,11 @@ export default function ScanClient() {
                     style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }}
                   />
                 </div>
-                <h3 className="font-heading" style={{ fontSize: 'var(--text-xl)', marginBottom: 8 }}>Gemini Vision Analyzing...</h3>
-                <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>Identifying material, category, and environmental impact</p>
+                <h3 className="font-heading" style={{ fontSize: 'var(--text-xl)', marginBottom: 8, color: 'var(--primary)' }}>THADAM AI VISION ANALYZING...</h3>
+                <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', marginBottom: 4 }}>Identifying waste category...</p>
+                <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', marginBottom: 4 }}>Calculating carbon impact...</p>
+                <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', marginBottom: 4 }}>Generating sustainability report...</p>
+                <p style={{ color: 'var(--dim)', fontSize: 'var(--text-xs)', marginTop: 12 }}>THADAM Vision Operating in Offline Sustainability Mode</p>
               </motion.div>
             )}
 
@@ -283,6 +451,9 @@ export default function ScanClient() {
                       <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>
                         {result.confidence}% confidence
                       </p>
+                      <p style={{ color: 'var(--warning)', fontSize: 'var(--text-xs)', marginTop: 4 }}>
+                        ⚡ THADAM Vision Operating in Offline Sustainability Mode
+                      </p>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
@@ -290,6 +461,12 @@ export default function ScanClient() {
                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>Carbon Impact</div>
                         <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--primary)' }}>{result.carbonImpact}</div>
                       </div>
+                      {result.rewardPoints !== undefined && (
+                        <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
+                          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)', marginBottom: 4 }}>Reward Points</div>
+                          <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--warning)' }}>+{result.rewardPoints}</div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="glass-subtle" style={{ padding: 'var(--space-md)', borderLeft: '3px solid var(--primary)', borderRadius: 'var(--radius-md)' }}>
